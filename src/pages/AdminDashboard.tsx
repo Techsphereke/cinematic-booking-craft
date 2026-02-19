@@ -33,6 +33,7 @@ interface Booking {
   deposit_amount: number;
   remaining_balance: number;
   special_notes?: string | null;
+  client_user_id: string | null;
   services?: { name: string } | null;
 }
 
