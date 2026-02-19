@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowDown, Camera, Video, Mic, CalendarDays, Star, Phone, Mail, ChevronRight, Play } from "lucide-react";
+import { ArrowDown, Camera, Video, Mic, CalendarDays, Star, Phone, Mail, ChevronRight, Play, MapPin, Instagram, Youtube, Clock, CheckCircle2, Sparkles, FileText } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import CostCalculator from "@/components/CostCalculator";
 import heroBg from "@/assets/hero-bg.jpg";
 import servicePhotography from "@/assets/service-photography.jpg";
 import serviceVideography from "@/assets/service-videography.jpg";
@@ -69,6 +70,7 @@ export default function Index() {
   return (
     <div className="bg-background min-h-screen overflow-x-hidden">
       <Navbar />
+      <CostCalculator />
 
       {/* ─── HERO ─── */}
       <section ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -340,38 +342,146 @@ export default function Index() {
         </div>
       </section>
 
-      {/* ─── PROCESS ─── */}
-      <section className="section-padding max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="w-16 h-0.5 bg-primary mx-auto mb-6" />
-          <p className="font-body text-primary text-[10px] tracking-[0.45em] uppercase mb-4">How It Works</p>
-          <h2 className="font-display text-5xl text-foreground">Book in 4 Simple Steps</h2>
+      {/* ─── PROCESS (Redesigned) ─── */}
+      <section className="py-28 overflow-hidden relative bg-muted/40">
+        {/* Background decoration */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-primary/3 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/3 blur-3xl" />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 opacity-[0.025]" style={{
+            backgroundImage: "linear-gradient(hsl(15,83%,50%) 1px, transparent 1px), linear-gradient(90deg, hsl(15,83%,50%) 1px, transparent 1px)",
+            backgroundSize: "60px 60px"
+          }} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
-          {/* connector line */}
-          <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
-          {[
-            { step: "01", label: "Get a Quote", desc: "Tell us about your event. We'll craft a personalised proposal within 24 hours." },
-            { step: "02", label: "Book & Deposit", desc: "Confirm your date with a 30% deposit. Simple, secure, and instant." },
-            { step: "03", label: "We Create", desc: "Our team arrives and works their magic — you focus on enjoying your event." },
-            { step: "04", label: "Receive & Relive", desc: "Your cinematic deliverables arrive beautifully edited and ready to share." },
-          ].map((item, i) => (
+
+        <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+          {/* Header */}
+          <div className="text-center mb-20">
             <motion.div
-              key={item.step}
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              variants={fadeUp}
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              transition={{ duration: 0.6 }}
               viewport={{ once: true }}
-              className="relative text-center p-8 border border-border hover:border-primary/40 hover:bg-accent/30 transition-all duration-300 rounded-sm group"
+              className="w-16 h-0.5 bg-primary mx-auto mb-6 origin-left"
+            />
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-body text-primary text-[10px] tracking-[0.45em] uppercase mb-4"
             >
-              <div className="w-20 h-20 rounded-full border-2 border-primary/30 group-hover:border-primary flex items-center justify-center mx-auto mb-6 transition-colors duration-300">
-                <span className="font-display text-3xl text-primary">{item.step}</span>
-              </div>
-              <h3 className="font-display text-xl text-foreground mb-3">{item.label}</h3>
-              <p className="font-body text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-            </motion.div>
-          ))}
+              How It Works
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="font-display text-5xl md:text-6xl text-foreground mb-4"
+            >
+              Your Journey With Us
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: true }}
+              className="font-body text-muted-foreground text-sm max-w-md mx-auto"
+            >
+              From your first message to receiving your cinematic memories — here's how we make it effortless.
+            </motion.p>
+          </div>
+
+          {/* Steps */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[
+              {
+                step: "01",
+                label: "Get a Quote",
+                desc: "Tell us your vision — event type, date, location, and services you need. We'll craft a personalised proposal within 24 hours, completely free.",
+                Icon: FileText,
+                accent: "Personalised · Free · 24hr Response",
+                color: "bg-primary/8",
+              },
+              {
+                step: "02",
+                label: "Book & Deposit",
+                desc: "Love the quote? Secure your date with just a 30% deposit. We handle everything securely online — no faff, no contracts in the post.",
+                Icon: CheckCircle2,
+                accent: "30% Deposit · Instant Confirmation · Secure Payment",
+                color: "bg-primary/5",
+              },
+              {
+                step: "03",
+                label: "We Work Our Magic",
+                desc: "Our expert team arrives fully equipped and ready. You enjoy every moment of your event while we capture it with cinematic precision.",
+                Icon: Sparkles,
+                accent: "Expert Team · Full Equipment · Creative Direction",
+                color: "bg-primary/5",
+              },
+              {
+                step: "04",
+                label: "Receive & Relive",
+                desc: "Your beautifully edited photos and videos are delivered to your private portal. Pay the balance on delivery and share your story with the world.",
+                Icon: Play,
+                accent: "Private Portal · Edited Deliverables · Balance on Completion",
+                color: "bg-primary/8",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                custom={i}
+                initial="hidden"
+                whileInView="visible"
+                variants={fadeUp}
+                viewport={{ once: true }}
+                className="group relative flex gap-6 p-7 border border-border hover:border-primary/50 bg-background hover:bg-primary/3 transition-all duration-500 rounded-sm overflow-hidden"
+              >
+                {/* Number watermark */}
+                <div className="absolute right-5 top-4 font-display text-7xl text-border/80 group-hover:text-primary/10 transition-colors duration-500 leading-none select-none pointer-events-none">
+                  {item.step}
+                </div>
+
+                {/* Icon col */}
+                <div className="flex-shrink-0">
+                  <div className="w-14 h-14 rounded-sm border border-primary/30 bg-primary/10 group-hover:bg-primary group-hover:border-primary flex items-center justify-center transition-all duration-400">
+                    <item.Icon size={22} className="text-primary group-hover:text-white transition-colors duration-400" />
+                  </div>
+                  {i < 3 && (
+                    <div className="hidden lg:block w-px h-full bg-gradient-to-b from-primary/30 to-transparent mx-auto mt-4" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 relative z-10">
+                  <p className="font-body text-[9px] tracking-[0.3em] uppercase text-primary mb-1">Step {item.step}</p>
+                  <h3 className="font-display text-2xl text-foreground mb-3 group-hover:text-primary transition-colors duration-300">{item.label}</h3>
+                  <p className="font-body text-xs text-muted-foreground leading-relaxed mb-4">{item.desc}</p>
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {item.accent.split(" · ").map((tag) => (
+                      <span key={tag} className="font-body text-[9px] tracking-widest uppercase px-2.5 py-1 bg-primary/8 text-primary border border-primary/20 rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            viewport={{ once: true }}
+            className="text-center mt-16"
+          >
+            <Link to="/booking" className="btn-primary mr-4">Start Your Journey</Link>
+            <Link to="/quote" className="btn-outline">Get a Free Quote</Link>
+          </motion.div>
         </div>
       </section>
 
@@ -476,64 +586,146 @@ export default function Index() {
         </motion.div>
       </section>
 
-      {/* ─── FOOTER ─── */}
-      <footer className="border-t border-border py-16 px-6 bg-foreground">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div>
-            <div className="flex items-center gap-3 mb-5">
-              <img src={jtsLogo} alt="JT Studios" className="h-14 w-auto" />
+      {/* ─── FOOTER (Redesigned) ─── */}
+      <footer className="bg-foreground relative overflow-hidden">
+        {/* Brand diagonal texture */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: "repeating-linear-gradient(-45deg, hsl(15,83%,50%) 0px, hsl(15,83%,50%) 1px, transparent 1px, transparent 60px)"
+        }} />
+        {/* Glow orbs */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-primary/8 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10">
+          {/* Top bar — CTA strip */}
+          <div className="border-b border-white/8 px-6 md:px-12 py-10">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
               <div>
-                <p className="font-display text-white text-lg tracking-wider">JT Studios</p>
-                <p className="font-body text-white/40 text-[10px] tracking-widest uppercase">& Events</p>
+                <p className="font-body text-primary text-[10px] tracking-[0.4em] uppercase mb-2">Limited Dates Available</p>
+                <h3 className="font-display text-3xl md:text-4xl text-white">
+                  Ready to book your event?
+                </h3>
+              </div>
+              <div className="flex gap-3 flex-shrink-0">
+                <Link to="/booking" className="font-body text-xs tracking-[0.25em] uppercase px-8 py-3.5 bg-primary text-white hover:bg-primary-light transition-all duration-300 shadow-brand">
+                  Book Now
+                </Link>
+                <Link to="/quote" className="font-body text-xs tracking-[0.25em] uppercase px-8 py-3.5 border border-white/20 text-white/70 hover:border-primary hover:text-primary transition-all duration-300">
+                  Free Quote
+                </Link>
               </div>
             </div>
-            <p className="font-body text-white/40 text-xs leading-relaxed max-w-xs">
-              Premium cinematic photography, videography, and event services across the UK. Creating legacies, one frame at a time.
-            </p>
           </div>
-          <div>
-            <p className="font-body text-[10px] tracking-[0.3em] uppercase text-primary mb-6">Navigation</p>
-            <ul className="space-y-3">
-              {[...navLinks, { label: "Client Portal", href: "/portal" }].map((l) => (
-                <li key={l.href}>
-                  <Link to={l.href} className="font-body text-xs text-white/40 hover:text-primary transition-colors flex items-center gap-1 group">
-                    <ChevronRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="font-body text-[10px] tracking-[0.3em] uppercase text-primary mb-6">Get in Touch</p>
-            <div className="space-y-4">
-              <a href="tel:+447916843781" className="flex items-center gap-3 font-body text-xs text-white/40 hover:text-primary transition-colors group">
-                <div className="w-8 h-8 rounded-full border border-white/10 group-hover:border-primary flex items-center justify-center transition-colors">
-                  <Phone size={12} className="group-hover:text-primary" />
+
+          {/* Main footer grid */}
+          <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 grid grid-cols-1 md:grid-cols-12 gap-12">
+            {/* Brand col */}
+            <div className="md:col-span-4">
+              <div className="flex items-center gap-4 mb-6">
+                <img src={jtsLogo} alt="JT Studios" className="h-16 w-auto drop-shadow-2xl" />
+                <div>
+                  <p className="font-display text-white text-xl tracking-wider leading-tight">JT Studios</p>
+                  <p className="font-body text-primary text-[9px] tracking-[0.35em] uppercase">& Events</p>
                 </div>
-                +44 7916 843781
-              </a>
-              <a href="mailto:info@jtstudios.events" className="flex items-center gap-3 font-body text-xs text-white/40 hover:text-primary transition-colors group">
-                <div className="w-8 h-8 rounded-full border border-white/10 group-hover:border-primary flex items-center justify-center transition-colors">
-                  <Mail size={12} className="group-hover:text-primary" />
+              </div>
+              <p className="font-body text-white/35 text-xs leading-relaxed max-w-xs mb-8">
+                UK's premier cinematic event studio. We capture your story through photography, videography, hosting, and event planning — crafted with excellence.
+              </p>
+              {/* Contact */}
+              <div className="space-y-3">
+                <a href="tel:+447916843781" className="flex items-center gap-3 group">
+                  <div className="w-8 h-8 rounded border border-white/10 group-hover:border-primary flex items-center justify-center transition-all">
+                    <Phone size={12} className="text-white/30 group-hover:text-primary transition-colors" />
+                  </div>
+                  <span className="font-body text-xs text-white/35 group-hover:text-white/70 transition-colors">+44 7916 843781</span>
+                </a>
+                <a href="mailto:info@jtstudios.events" className="flex items-center gap-3 group">
+                  <div className="w-8 h-8 rounded border border-white/10 group-hover:border-primary flex items-center justify-center transition-all">
+                    <Mail size={12} className="text-white/30 group-hover:text-primary transition-colors" />
+                  </div>
+                  <span className="font-body text-xs text-white/35 group-hover:text-white/70 transition-colors">info@jtstudios.events</span>
+                </a>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded border border-white/10 flex items-center justify-center">
+                    <MapPin size={12} className="text-white/30" />
+                  </div>
+                  <span className="font-body text-xs text-white/35">UK Nationwide · Travel Available</span>
                 </div>
-                info@jtstudios.events
-              </a>
+              </div>
             </div>
-            <div className="mt-8">
-              <Link
-                to="/booking"
-                className="font-body text-[10px] tracking-[0.3em] uppercase px-6 py-3 bg-primary text-white hover:bg-primary-light transition-all duration-300 inline-block"
-              >
-                Book Now
-              </Link>
+
+            {/* Services */}
+            <div className="md:col-span-2">
+              <p className="font-body text-[9px] tracking-[0.35em] uppercase text-primary mb-6">Services</p>
+              <ul className="space-y-3">
+                {["Photography", "Videography", "Event Hosting", "Event Planning"].map((s) => (
+                  <li key={s}>
+                    <Link to="/services" className="font-body text-xs text-white/35 hover:text-primary transition-colors flex items-center gap-1.5 group">
+                      <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
+                      {s}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Navigation */}
+            <div className="md:col-span-2">
+              <p className="font-body text-[9px] tracking-[0.35em] uppercase text-primary mb-6">Navigate</p>
+              <ul className="space-y-3">
+                {[...navLinks, { label: "Client Portal", href: "/portal" }, { label: "Admin", href: "/admin" }].map((l) => (
+                  <li key={l.href}>
+                    <Link to={l.href} className="font-body text-xs text-white/35 hover:text-primary transition-colors flex items-center gap-1.5 group">
+                      <div className="w-1 h-1 rounded-full bg-primary/40 group-hover:bg-primary transition-colors" />
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Why us + hours */}
+            <div className="md:col-span-4">
+              <p className="font-body text-[9px] tracking-[0.35em] uppercase text-primary mb-6">Why JT Studios</p>
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {[
+                  { num: "80+", label: "Events" },
+                  { num: "5★", label: "Rating" },
+                  { num: "30%", label: "Deposit" },
+                  { num: "24hr", label: "Response" },
+                ].map((s) => (
+                  <div key={s.label} className="border border-white/8 p-3 text-center hover:border-primary/30 transition-colors">
+                    <p className="font-display text-2xl text-primary">{s.num}</p>
+                    <p className="font-body text-[9px] text-white/30 tracking-widest uppercase">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="border border-white/8 p-4 flex items-center gap-3">
+                <Clock size={16} className="text-primary flex-shrink-0" />
+                <div>
+                  <p className="font-body text-[9px] tracking-widest uppercase text-white/30 mb-0.5">Availability</p>
+                  <p className="font-body text-xs text-white/50">Mon – Sun · Flexible Hours</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mt-12 pt-8 border-t border-white/10 text-center">
-          <p className="font-body text-[10px] text-white/25 tracking-widest">
-            © {new Date().getFullYear()} JT Studios & Events · All Rights Reserved · UK Based
-          </p>
+
+          {/* Bottom bar */}
+          <div className="border-t border-white/8 px-6 md:px-12 py-6">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="font-body text-[10px] text-white/20 tracking-widest">
+                © {new Date().getFullYear()} JT Studios & Events · All Rights Reserved · United Kingdom
+              </p>
+              <div className="flex items-center gap-6">
+                <a href="https://www.instagram.com/jt_studios_events" target="_blank" rel="noopener noreferrer" className="font-body text-[10px] text-white/20 hover:text-primary transition-colors tracking-widest uppercase flex items-center gap-1.5">
+                  <Instagram size={12} /> Instagram
+                </a>
+                <a href="https://youtube.com/@jtstudiosevents" target="_blank" rel="noopener noreferrer" className="font-body text-[10px] text-white/20 hover:text-primary transition-colors tracking-widest uppercase flex items-center gap-1.5">
+                  <Youtube size={12} /> YouTube
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
