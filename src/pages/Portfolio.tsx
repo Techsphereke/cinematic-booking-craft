@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import CostCalculator from "@/components/CostCalculator";
 import { Search } from "lucide-react";
 
 interface PortfolioItem {
@@ -141,6 +142,7 @@ export default function Portfolio() {
           </motion.div>
         </motion.div>
       )}
+      <CostCalculator />
     </div>
   );
 }
