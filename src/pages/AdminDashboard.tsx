@@ -13,7 +13,7 @@ import {
   MessageSquare, Mail, Phone, RefreshCw, CheckCircle, XCircle,
   TrendingUp, Users, Edit2, Save, X, UserPlus, Briefcase, Image, Star,
   FolderOpen, Lock, Unlock, Shield, ShieldOff, LayoutDashboard, Settings,
-  ChevronLeft, ChevronRight, LogOut, Menu, Clock, Activity,
+  ChevronLeft, ChevronRight, LogOut, Menu, Clock, Activity, Home,
 } from "lucide-react";
 
 interface Booking {
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
         </nav>
 
         {/* User info + sign out */}
-        <div className={`border-t border-zinc-800 p-4 ${!sidebarOpen ? "flex justify-center" : ""}`}>
+        <div className={`border-t border-zinc-800 p-4 ${!sidebarOpen ? "flex flex-col items-center gap-2" : ""}`}>
           {sidebarOpen ? (
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -372,14 +372,22 @@ export default function AdminDashboard() {
                   <p className="font-body text-[9px] text-primary tracking-widest uppercase">Administrator</p>
                 </div>
               </div>
+              <a href="/" className="w-full flex items-center gap-2 text-zinc-500 hover:text-zinc-200 transition-colors font-body text-xs py-1.5 mb-1">
+                <Home size={12} /> Back to Website
+              </a>
               <button onClick={() => { signOut(); navigate("/"); }} className="w-full flex items-center gap-2 text-zinc-500 hover:text-red-400 transition-colors font-body text-xs py-1">
                 <LogOut size={12} /> Sign Out
               </button>
             </div>
           ) : (
-            <button onClick={() => { signOut(); navigate("/"); }} title="Sign Out" className="text-zinc-500 hover:text-red-400 transition-colors">
-              <LogOut size={16} />
-            </button>
+            <>
+              <a href="/" title="Back to Website" className="text-zinc-500 hover:text-zinc-200 transition-colors p-1.5 block">
+                <Home size={16} />
+              </a>
+              <button onClick={() => { signOut(); navigate("/"); }} title="Sign Out" className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 block">
+                <LogOut size={16} />
+              </button>
+            </>
           )}
         </div>
       </aside>
