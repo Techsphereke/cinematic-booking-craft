@@ -14,16 +14,314 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      blocked_dates: {
+        Row: {
+          blocked_date: string
+          created_at: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_date: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_date?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          attendees: number | null
+          booking_ref: string
+          client_user_id: string | null
+          created_at: string
+          deposit_amount: number
+          email: string
+          end_time: string
+          estimated_total: number
+          event_date: string
+          event_type: string
+          full_name: string
+          hourly_rate: number
+          id: string
+          location: string
+          phone: string
+          remaining_balance: number
+          service_id: string | null
+          special_notes: string | null
+          start_time: string
+          status: string
+          stripe_balance_payment_intent: string | null
+          stripe_balance_session_id: string | null
+          stripe_deposit_payment_intent: string | null
+          stripe_deposit_session_id: string | null
+          total_hours: number | null
+          updated_at: string
+        }
+        Insert: {
+          attendees?: number | null
+          booking_ref: string
+          client_user_id?: string | null
+          created_at?: string
+          deposit_amount: number
+          email: string
+          end_time: string
+          estimated_total: number
+          event_date: string
+          event_type: string
+          full_name: string
+          hourly_rate: number
+          id?: string
+          location: string
+          phone: string
+          remaining_balance: number
+          service_id?: string | null
+          special_notes?: string | null
+          start_time: string
+          status?: string
+          stripe_balance_payment_intent?: string | null
+          stripe_balance_session_id?: string | null
+          stripe_deposit_payment_intent?: string | null
+          stripe_deposit_session_id?: string | null
+          total_hours?: number | null
+          updated_at?: string
+        }
+        Update: {
+          attendees?: number | null
+          booking_ref?: string
+          client_user_id?: string | null
+          created_at?: string
+          deposit_amount?: number
+          email?: string
+          end_time?: string
+          estimated_total?: number
+          event_date?: string
+          event_type?: string
+          full_name?: string
+          hourly_rate?: number
+          id?: string
+          location?: string
+          phone?: string
+          remaining_balance?: number
+          service_id?: string | null
+          special_notes?: string | null
+          start_time?: string
+          status?: string
+          stripe_balance_payment_intent?: string | null
+          stripe_balance_session_id?: string | null
+          stripe_deposit_payment_intent?: string | null
+          stripe_deposit_session_id?: string | null
+          total_hours?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          featured: boolean
+          id: string
+          image_url: string
+          sort_order: number | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          image_url: string
+          sort_order?: number | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          id?: string
+          image_url?: string
+          sort_order?: number | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          booking_id: string | null
+          client_user_id: string
+          content_locked: boolean
+          created_at: string
+          description: string | null
+          full_gallery_urls: string[] | null
+          full_video_url: string | null
+          id: string
+          preview_gallery_urls: string[] | null
+          preview_video_url: string | null
+          status: string
+          title: string
+          updated_at: string
+          watermarked: boolean
+        }
+        Insert: {
+          booking_id?: string | null
+          client_user_id: string
+          content_locked?: boolean
+          created_at?: string
+          description?: string | null
+          full_gallery_urls?: string[] | null
+          full_video_url?: string | null
+          id?: string
+          preview_gallery_urls?: string[] | null
+          preview_video_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          watermarked?: boolean
+        }
+        Update: {
+          booking_id?: string | null
+          client_user_id?: string
+          content_locked?: boolean
+          created_at?: string
+          description?: string | null
+          full_gallery_urls?: string[] | null
+          full_video_url?: string | null
+          id?: string
+          preview_gallery_urls?: string[] | null
+          preview_video_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          watermarked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          created_at: string
+          description: string | null
+          hourly_rate: number
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_booking_ref: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +448,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "client"],
+    },
   },
 } as const
