@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
   try {
     const smtpHost = Deno.env.get('SMTP_HOST');
     const smtpPort = parseInt(Deno.env.get('SMTP_PORT') || '587');
+    console.log('SMTP config:', { smtpHost, smtpPort, smtpUser: Deno.env.get('SMTP_USER'), from: Deno.env.get('SMTP_FROM') });
     const smtpUser = Deno.env.get('SMTP_USER');
     const smtpPass = Deno.env.get('SMTP_PASS');
     const smtpFrom = Deno.env.get('SMTP_FROM') || smtpUser || 'noreply@jtstudios.events';
