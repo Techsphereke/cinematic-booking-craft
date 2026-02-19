@@ -340,7 +340,7 @@ export default function Index() {
             <span className="text-gold-gradient italic">Something Unforgettable?</span>
           </h2>
           <p className="font-body text-muted-foreground text-sm tracking-wider max-w-lg mx-auto mb-10">
-            Book your session today. A 50% deposit secures your date — full balance due on completion.
+            Book your session today. A 30% deposit secures your date — full balance due on completion.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
