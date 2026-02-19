@@ -69,7 +69,7 @@ export default function ClientPortal() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [projectFiles, setProjectFiles] = useState<Record<string, ProjectFile[]>>({});
   const [loadingFiles, setLoadingFiles] = useState(false);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<{ url: string; locked: boolean } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -149,10 +149,24 @@ export default function ClientPortal() {
       <AnimatePresence>
         {lightboxUrl && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-6"
             onClick={() => setLightboxUrl(null)}>
-            <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2" onClick={() => setLightboxUrl(null)}><X size={24} /></button>
-            <img src={lightboxUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
+            <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 z-10" onClick={() => setLightboxUrl(null)}><X size={24} /></button>
+            <div className="relative max-w-5xl w-full max-h-[90vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
+              <img
+                src={lightboxUrl.url}
+                alt="Preview"
+                className={`max-w-full max-h-[85vh] object-contain rounded-xl select-none ${lightboxUrl.locked ? "opacity-70 blur-[1px]" : ""}`}
+                onContextMenu={e => e.preventDefault()}
+                draggable={false}
+              />
+              {lightboxUrl.locked && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <img src={jtsLogo} alt="JT Studios Watermark" className="w-24 h-24 object-contain opacity-70 drop-shadow-2xl" />
+                  <span className="font-body text-xs tracking-[0.4em] uppercase text-white/50 mt-3">Watermarked Preview</span>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -422,9 +436,9 @@ export default function ClientPortal() {
                                     {/* Image grid */}
                                     <div className="grid grid-cols-3 gap-2">
                                       {projectFiles[selectedProject.id]?.filter(f => !f.isVideo).slice(0, 6).map((file, j) => (
-                                        <div key={j} className="relative aspect-square overflow-hidden rounded-xl group cursor-pointer border" style={{ borderColor: "hsl(30,8%,18%)" }}
-                                          onClick={() => !selectedProject.content_locked && setLightboxUrl(file.url)}>
-                                          <img src={file.url} alt={file.name} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${selectedProject.content_locked ? "opacity-60 blur-[2px]" : ""}`} />
+                                         <div key={j} className="relative aspect-square overflow-hidden rounded-xl group cursor-pointer border" style={{ borderColor: "hsl(30,8%,18%)" }}
+                                          onClick={() => setLightboxUrl({ url: file.url, locked: selectedProject.content_locked })}>
+                                          <img src={file.url} alt={file.name} onContextMenu={e => e.preventDefault()} draggable={false} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 select-none ${selectedProject.content_locked ? "opacity-60 blur-[2px]" : ""}`} />
                                           {selectedProject.content_locked ? (
                                             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center rounded-xl gap-2">
                                               {/* Centered logo watermark */}
@@ -433,7 +447,7 @@ export default function ClientPortal() {
                                             </div>
                                           ) : (
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl gap-2">
-                                              <button onClick={(e) => { e.stopPropagation(); setLightboxUrl(file.url); }} className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition-colors">
+                                              <button onClick={(e) => { e.stopPropagation(); setLightboxUrl({ url: file.url, locked: false }); }} className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition-colors">
                                                 <Eye size={14} className="text-white" />
                                               </button>
                                               <a href={file.url} download={file.name} onClick={e => e.stopPropagation()} className="w-8 h-8 bg-primary/80 rounded-full flex items-center justify-center hover:bg-primary transition-colors">
@@ -498,8 +512,8 @@ export default function ClientPortal() {
                                             : selectedProject.preview_gallery_urls
                                         ).slice(0, 6).map((url, j) => (
                                           <div key={j} className="relative aspect-square overflow-hidden rounded-xl group border cursor-pointer" style={{ borderColor: "hsl(30,8%,18%)" }}
-                                            onClick={() => !selectedProject.content_locked && setLightboxUrl(url)}>
-                                            <img src={url} alt={`Photo ${j + 1}`} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${selectedProject.content_locked ? "opacity-60 blur-[2px]" : ""}`} />
+                                            onClick={() => setLightboxUrl({ url, locked: selectedProject.content_locked })}>
+                                            <img src={url} alt={`Photo ${j + 1}`} onContextMenu={e => e.preventDefault()} draggable={false} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 select-none ${selectedProject.content_locked ? "opacity-60 blur-[2px]" : ""}`} />
                                             {selectedProject.content_locked ? (
                                               <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center rounded-xl gap-2">
                                                 <img src={jtsLogo} alt="JT Studios Watermark" className="w-10 h-10 object-contain opacity-80 drop-shadow-lg" />
