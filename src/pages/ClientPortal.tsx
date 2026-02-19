@@ -58,7 +58,11 @@ export default function ClientPortal() {
         body: { booking_id: bookingId, amount: Math.round(amount * 100), deposit: false },
       });
       if (error || !data?.url) throw new Error("Payment setup failed");
-      window.location.href = data.url;
+      if (window.top) {
+        window.top.location.href = data.url;
+      } else {
+        window.open(data.url, "_blank");
+      }
     } catch {
       alert("Payment setup failed. Please try again.");
     } finally {

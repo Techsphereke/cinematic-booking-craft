@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { Calendar, Clock, MapPin, Users, PoundSterling, CheckCircle, Loader2 } from "lucide-react";
+import CostCalculator from "@/components/CostCalculator";
 
 interface Service {
   id: string;
@@ -209,7 +210,12 @@ export default function Booking() {
           return;
         }
 
-        window.location.href = sessionData.url;
+        // Use window.top to break out of preview iframes, fallback to window.open
+        if (window.top) {
+          window.top.location.href = sessionData.url;
+        } else {
+          window.open(sessionData.url, "_blank");
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Booking failed";
@@ -417,6 +423,7 @@ export default function Booking() {
           </div>
         </div>
       </div>
+      <CostCalculator />
     </div>
   );
 }
