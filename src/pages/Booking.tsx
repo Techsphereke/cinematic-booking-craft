@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { Calendar, Clock, MapPin, Users, PoundSterling, CheckCircle, Loader2 } from "lucide-react";
 import CostCalculator from "@/components/CostCalculator";
 
@@ -423,6 +424,7 @@ export default function Booking() {
           </div>
         </div>
       </div>
+      <Footer />
       <CostCalculator />
     </div>
   );

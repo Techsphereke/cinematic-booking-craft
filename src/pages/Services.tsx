@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Camera, Video, Mic, CalendarDays, Clock, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import CostCalculator from "@/components/CostCalculator";
 import servicePhotography from "@/assets/service-photography.jpg";
 import serviceVideography from "@/assets/service-videography.jpg";
@@ -196,6 +197,7 @@ export default function Services() {
           Get a Custom Quote
         </Link>
       </div>
+      <Footer />
       <CostCalculator />
     </div>
   );

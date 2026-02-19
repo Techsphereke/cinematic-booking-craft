@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { MessageSquare, Phone, Mail, Send, CheckCircle, Loader2, Calendar, Users, MapPin, PoundSterling } from "lucide-react";
 
 const serviceOptions = ["Photography", "Videography", "Event Hosting", "Event Planning", "Multiple Services (Bundle)"];
@@ -371,6 +372,7 @@ export default function Quote() {
           </motion.div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
