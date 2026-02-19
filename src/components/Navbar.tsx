@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import jtsLogo from "@/assets/jts-logo.png";
 
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/services" },
   { label: "Portfolio", href: "/portfolio" },
+  { label: "Get a Quote", href: "/quote" },
   { label: "Book Now", href: "/booking" },
 ];
 
@@ -34,9 +36,7 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 border border-primary flex items-center justify-center">
-            <span className="font-display text-primary text-lg font-semibold tracking-widest">JT</span>
-          </div>
+          <img src={jtsLogo} alt="JT Studios & Events" className="h-12 w-auto" />
           <div className="hidden sm:block">
             <p className="font-display text-foreground text-sm tracking-[0.3em] uppercase leading-none">JT Studios</p>
             <p className="font-body text-primary text-[10px] tracking-[0.4em] uppercase leading-none mt-0.5">& Events</p>

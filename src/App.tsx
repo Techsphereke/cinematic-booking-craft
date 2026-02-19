@@ -13,6 +13,7 @@ import ClientPortal from "./pages/ClientPortal";
 import AdminDashboard from "./pages/AdminDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
+import Quote from "./pages/Quote";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/portal" element={<ClientPortal />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/quote" element={<Quote />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
@@ -41,3 +43,4 @@ const App = () => (
 );
 
 export default App;
+

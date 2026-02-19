@@ -252,6 +252,60 @@ export type Database = {
           },
         ]
       }
+      quote_requests: {
+        Row: {
+          admin_notes: string | null
+          budget_range: string | null
+          created_at: string
+          email: string
+          event_date: string | null
+          event_type: string
+          full_name: string
+          guests_estimate: number | null
+          id: string
+          location: string | null
+          message: string
+          phone: string
+          service_interest: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          created_at?: string
+          email: string
+          event_date?: string | null
+          event_type: string
+          full_name: string
+          guests_estimate?: number | null
+          id?: string
+          location?: string | null
+          message: string
+          phone: string
+          service_interest: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          created_at?: string
+          email?: string
+          event_date?: string | null
+          event_type?: string
+          full_name?: string
+          guests_estimate?: number | null
+          id?: string
+          location?: string | null
+          message?: string
+          phone?: string
+          service_interest?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           created_at: string
