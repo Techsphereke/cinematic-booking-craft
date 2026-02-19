@@ -6,69 +6,66 @@
 
 @layer base {
   :root {
-    /* Warm ivory & slate luxury — light & readable */
-    --background: 36 30% 97%;
-    --foreground: 220 25% 12%;
+    /* JTS Logo Colors: Orange-Red #E8441A, Black, Cream/White */
+    --background: 30 20% 97%;
+    --foreground: 20 10% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
+    --card-foreground: 20 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
+    --popover-foreground: 20 10% 10%;
 
-    /* Deep gold primary */
-    --primary: 38 72% 42%;
+    /* JTS Brand Orange */
+    --primary: 15 83% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 38 72% 55%;
-    --primary-dark: 35 68% 28%;
+    --primary-light: 15 83% 62%;
+    --primary-dark: 12 78% 38%;
 
-    --secondary: 36 20% 93%;
-    --secondary-foreground: 220 25% 20%;
+    --secondary: 30 15% 93%;
+    --secondary-foreground: 20 10% 20%;
 
-    --muted: 36 18% 94%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 30 12% 94%;
+    --muted-foreground: 20 8% 48%;
 
-    --accent: 36 25% 90%;
-    --accent-foreground: 38 72% 38%;
+    --accent: 15 40% 92%;
+    --accent-foreground: 15 83% 38%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 36 20% 86%;
-    --input: 36 20% 96%;
-    --ring: 38 72% 42%;
+    --border: 30 15% 86%;
+    --input: 30 12% 96%;
+    --ring: 15 83% 50%;
 
-    --radius: 0.25rem;
+    --radius: 0.375rem;
 
-    /* Custom tokens */
-    --gold: 38 72% 42%;
-    --gold-light: 38 72% 58%;
-    --gold-dark: 35 68% 28%;
-    --charcoal: 220 20% 18%;
-    --surface: 36 22% 96%;
-    --surface-raised: 0 0% 100%;
-    --slate: 220 25% 12%;
+    /* Brand tokens */
+    --orange: 15 83% 50%;
+    --orange-light: 15 83% 62%;
+    --orange-dark: 12 78% 38%;
+    --jet: 20 10% 10%;
+    --cream: 30 40% 97%;
 
     /* Gradients */
-    --gradient-gold: linear-gradient(135deg, hsl(38, 72%, 42%), hsl(35, 68%, 28%));
-    --gradient-hero: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.80) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(0,0%,100%), hsl(36,22%,97%));
-    --gradient-section: linear-gradient(180deg, hsl(36,30%,97%), hsl(36,20%,93%));
+    --gradient-brand: linear-gradient(135deg, hsl(15, 83%, 50%), hsl(12, 78%, 38%));
+    --gradient-hero: linear-gradient(to bottom, rgba(10,6,4,0.35) 0%, rgba(10,6,4,0.60) 55%, rgba(10,6,4,0.88) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0,0%,100%), hsl(30,20%,97%));
 
     /* Shadows */
-    --shadow-gold: 0 4px 24px hsl(38 72% 42% / 0.18);
-    --shadow-card: 0 4px 24px rgba(0,0,0,0.08);
-    --shadow-elevated: 0 16px 48px rgba(0,0,0,0.12);
+    --shadow-brand: 0 4px 28px hsl(15 83% 50% / 0.22);
+    --shadow-card: 0 4px 24px rgba(0,0,0,0.07);
+    --shadow-elevated: 0 16px 48px rgba(0,0,0,0.10);
 
     /* Sidebar */
-    --sidebar-background: 220 25% 12%;
-    --sidebar-foreground: 36 30% 95%;
-    --sidebar-primary: 38 72% 42%;
+    --sidebar-background: 20 10% 10%;
+    --sidebar-foreground: 30 20% 95%;
+    --sidebar-primary: 15 83% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 38 72% 58%;
-    --sidebar-border: 220 20% 22%;
-    --sidebar-ring: 38 72% 42%;
+    --sidebar-accent: 20 8% 16%;
+    --sidebar-accent-foreground: 15 83% 62%;
+    --sidebar-border: 20 8% 20%;
+    --sidebar-ring: 15 83% 50%;
   }
 }
 
@@ -105,21 +102,34 @@
 }
 
 @layer components {
-  /* Gold accent line */
-  .gold-line {
-    @apply block h-px w-16 bg-primary;
+  /* Brand accent line */
+  .brand-line {
+    @apply block h-0.5 w-16 bg-primary;
   }
 
-  /* Glass card — light version */
+  /* Alias */
+  .gold-line {
+    @apply block h-0.5 w-16 bg-primary;
+  }
+
+  /* Glass card */
   .glass-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
     border: 1px solid hsl(var(--border));
   }
 
-  /* Gold gradient text */
+  /* Brand gradient text */
+  .text-brand-gradient {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Alias */
   .text-gold-gradient {
-    background: var(--gradient-gold);
+    background: var(--gradient-brand);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -135,9 +145,9 @@
     background: var(--gradient-hero);
   }
 
-  /* Gold border glow */
-  .gold-glow {
-    box-shadow: var(--shadow-gold);
+  /* Brand glow */
+  .brand-glow {
+    box-shadow: var(--shadow-brand);
     border-color: hsl(var(--primary) / 0.5);
   }
 
@@ -148,9 +158,19 @@
   .status-cancelled { @apply text-red-700 bg-red-50 border border-red-200; }
   .status-completed { @apply text-primary bg-primary/10 border border-primary/20; }
 
-  /* Section alternating bg */
+  /* Alternating section */
   .section-alt {
     background: hsl(var(--muted));
+  }
+
+  /* CTA Button */
+  .btn-primary {
+    @apply font-body text-xs tracking-[0.3em] uppercase px-10 py-4 bg-primary text-primary-foreground hover:bg-primary-light transition-all duration-300 inline-block;
+    box-shadow: var(--shadow-brand);
+  }
+
+  .btn-outline {
+    @apply font-body text-xs tracking-[0.3em] uppercase px-10 py-4 border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 inline-block;
   }
 }
 
@@ -168,13 +188,28 @@
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes draw-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, hsl(var(--primary)/0.6), hsl(var(--primary)), hsl(var(--primary)/0.6));
+  background: linear-gradient(90deg, hsl(var(--primary)/0.5), hsl(var(--primary)), hsl(var(--primary)/0.5));
   background-size: 200% auto;
-  animation: shimmer 3s linear infinite;
+  animation: shimmer 2.5s linear infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -182,4 +217,22 @@
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--primary)/0.4);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* Shadow utilities */
+.shadow-brand {
+  box-shadow: var(--shadow-brand);
+}
+
+.shadow-gold {
+  box-shadow: var(--shadow-brand);
 }

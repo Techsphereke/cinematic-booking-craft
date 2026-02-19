@@ -10,7 +10,7 @@ import {
 import {
   Calendar, PoundSterling, BookOpen, Settings, Plus, Trash2, Loader2,
   MessageSquare, Mail, Phone, Eye, RefreshCw, CheckCircle, XCircle, Clock,
-  TrendingUp, Users, ChevronRight, Edit2, Save, X, UserPlus, Briefcase,
+  TrendingUp, Users, ChevronRight, Edit2, Save, X, UserPlus, Briefcase, Image, Star,
 } from "lucide-react";
 
 interface Booking {
@@ -89,10 +89,23 @@ const quoteStatusLabel: Record<string, string> = {
   new: "New", contacted: "Contacted", quoted: "Quoted", booked: "Booked", declined: "Declined",
 };
 
-type TabType = "overview" | "bookings" | "quotes" | "services" | "staff" | "dates";
+type TabType = "overview" | "bookings" | "quotes" | "services" | "staff" | "portfolio" | "dates";
+
+interface PortfolioItem {
+  id: string;
+  title: string;
+  category: string;
+  description?: string | null;
+  image_url: string;
+  video_url?: string | null;
+  featured: boolean;
+  sort_order?: number | null;
+}
 
 const emptyService = { name: "", slug: "", hourly_rate: 150, description: "", icon: "" };
 const emptyStaff = { full_name: "", role: "", email: "", phone: "", bio: "", avatar_url: "" };
+const emptyPortfolio = { title: "", category: "Photography", description: "", image_url: "", video_url: "", featured: false };
+const portfolioCategories = ["Photography", "Videography", "Event Hosting", "Event Planning", "Wedding", "Corporate", "Other"];
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
@@ -124,6 +137,14 @@ export default function AdminDashboard() {
   const [newStaff, setNewStaff] = useState({ ...emptyStaff });
   const [savingStaff, setSavingStaff] = useState(false);
 
+  // Portfolio state
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  const [showAddPortfolio, setShowAddPortfolio] = useState(false);
+  const [newPortfolioItem, setNewPortfolioItem] = useState({ ...emptyPortfolio });
+  const [editingPortfolioId, setEditingPortfolioId] = useState<string | null>(null);
+  const [editPortfolioData, setEditPortfolioData] = useState<Partial<PortfolioItem>>({});
+  const [savingPortfolio, setSavingPortfolio] = useState(false);
+
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) navigate("/");
   }, [user, isAdmin, loading, navigate]);
@@ -131,18 +152,20 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     if (!isAdmin) return;
     setRefreshing(true);
-    const [bRes, sRes, qRes, dRes, stRes] = await Promise.all([
+    const [bRes, sRes, qRes, dRes, stRes, pRes] = await Promise.all([
       supabase.from("bookings").select("*, services(name)").order("created_at", { ascending: false }),
       supabase.from("services").select("*").order("name"),
       supabase.from("quote_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("blocked_dates").select("*").order("blocked_date"),
       supabase.from("staff").select("*").order("full_name"),
+      supabase.from("portfolio").select("*").order("sort_order", { ascending: true }),
     ]);
     if (bRes.data) setBookings(bRes.data);
     if (sRes.data) setServices(sRes.data);
     if (qRes.data) setQuotes(qRes.data);
     if (dRes.data) setBlockedDates(dRes.data);
     if (stRes.data) setStaff(stRes.data);
+    if (pRes.data) setPortfolio(pRes.data);
     setRefreshing(false);
   };
 
@@ -275,6 +298,57 @@ export default function AdminDashboard() {
     setBlockedDates((prev) => prev.filter((d) => d.id !== id));
   };
 
+  // PORTFOLIO CRUD
+  const addPortfolioItem = async () => {
+    if (!newPortfolioItem.title || !newPortfolioItem.image_url) return;
+    setSavingPortfolio(true);
+    const { data } = await supabase.from("portfolio").insert({
+      title: newPortfolioItem.title,
+      category: newPortfolioItem.category,
+      description: newPortfolioItem.description || null,
+      image_url: newPortfolioItem.image_url,
+      video_url: newPortfolioItem.video_url || null,
+      featured: newPortfolioItem.featured,
+      sort_order: portfolio.length,
+    }).select().single();
+    if (data) setPortfolio((prev) => [...prev, data]);
+    setNewPortfolioItem({ ...emptyPortfolio });
+    setShowAddPortfolio(false);
+    setSavingPortfolio(false);
+  };
+
+  const startEditPortfolio = (item: PortfolioItem) => {
+    setEditingPortfolioId(item.id);
+    setEditPortfolioData({ ...item });
+  };
+
+  const saveEditPortfolio = async () => {
+    if (!editingPortfolioId) return;
+    setSavingPortfolio(true);
+    await supabase.from("portfolio").update({
+      title: editPortfolioData.title,
+      category: editPortfolioData.category,
+      description: editPortfolioData.description,
+      image_url: editPortfolioData.image_url,
+      video_url: editPortfolioData.video_url || null,
+      featured: editPortfolioData.featured,
+    }).eq("id", editingPortfolioId);
+    setPortfolio((prev) => prev.map((p) => p.id === editingPortfolioId ? { ...p, ...editPortfolioData } as PortfolioItem : p));
+    setEditingPortfolioId(null);
+    setSavingPortfolio(false);
+  };
+
+  const togglePortfolioFeatured = async (id: string, featured: boolean) => {
+    await supabase.from("portfolio").update({ featured }).eq("id", id);
+    setPortfolio((prev) => prev.map((p) => p.id === id ? { ...p, featured } : p));
+  };
+
+  const deletePortfolioItem = async (id: string) => {
+    if (!confirm("Delete this portfolio item? This cannot be undone.")) return;
+    await supabase.from("portfolio").delete().eq("id", id);
+    setPortfolio((prev) => prev.filter((p) => p.id !== id));
+  };
+
   // Analytics
   const totalRevenue = bookings.filter((b) => b.status === "fully_paid" || b.status === "completed").reduce((s, b) => s + (b.estimated_total || 0), 0);
   const depositsReceived = bookings.filter((b) => ["deposit_paid", "fully_paid", "completed"].includes(b.status)).reduce((s, b) => s + (b.deposit_amount || 0), 0);
@@ -302,7 +376,7 @@ export default function AdminDashboard() {
     value: bookings.filter((b) => b.services?.name === s.name).length,
   })).filter((s) => s.value > 0);
 
-  const COLORS = ["hsl(43, 74%, 60%)", "hsl(43, 74%, 45%)", "hsl(43, 74%, 30%)", "hsl(43, 74%, 75%)"];
+  const COLORS = ["hsl(15, 83%, 50%)", "hsl(15, 83%, 35%)", "hsl(15, 83%, 65%)", "hsl(20, 60%, 40%)"];
 
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -316,6 +390,7 @@ export default function AdminDashboard() {
     { key: "quotes", label: "Quotes", icon: MessageSquare, badge: newQuotes || undefined },
     { key: "services", label: "Services", icon: Briefcase },
     { key: "staff", label: "Team", icon: Users },
+    { key: "portfolio", label: "Portfolio", icon: Image },
     { key: "dates", label: "Calendar", icon: Calendar },
   ];
 
@@ -560,7 +635,7 @@ export default function AdminDashboard() {
                     <p className="font-body text-xs tracking-widest uppercase text-primary mb-2">Financials</p>
                     {[
                       { label: "Estimated Total", value: `£${selectedBooking.estimated_total?.toFixed(2)}`, highlight: false },
-                      { label: "Deposit (50%)", value: `£${selectedBooking.deposit_amount?.toFixed(2)}`, highlight: true },
+                      { label: "Deposit (30%)", value: `£${selectedBooking.deposit_amount?.toFixed(2)}`, highlight: true },
                       { label: "Remaining Balance", value: `£${selectedBooking.remaining_balance?.toFixed(2)}`, highlight: false },
                     ].map((row) => (
                       <div key={row.label} className="flex justify-between font-body text-sm">
@@ -1026,6 +1101,173 @@ export default function AdminDashboard() {
                 <div className="col-span-2 border border-border bg-card p-12 text-center">
                   <Users className="text-muted-foreground mx-auto mb-3" size={24} />
                   <p className="font-body text-xs text-muted-foreground">No team members yet. Add your first team member above.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── PORTFOLIO ── */}
+        {tab === "portfolio" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="font-body text-xs text-muted-foreground tracking-widest">
+                {portfolio.length} items · {portfolio.filter(p => p.featured).length} featured
+              </p>
+              <button
+                onClick={() => setShowAddPortfolio(!showAddPortfolio)}
+                className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-[0.2em] uppercase px-5 py-2 hover:bg-primary-light transition-all"
+              >
+                <Plus size={12} /> Add Item
+              </button>
+            </div>
+
+            {/* Add Portfolio Form */}
+            <AnimatePresence>
+              {showAddPortfolio && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="border border-primary/40 bg-card p-6 space-y-4"
+                >
+                  <p className="font-body text-xs tracking-[0.3em] uppercase text-primary">New Portfolio Item</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Title *</label>
+                      <input className={inputCls} placeholder="e.g. Sarah & James Wedding" value={newPortfolioItem.title} onChange={e => setNewPortfolioItem(p => ({ ...p, title: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Category</label>
+                      <select className={inputCls} value={newPortfolioItem.category} onChange={e => setNewPortfolioItem(p => ({ ...p, category: e.target.value }))}>
+                        {portfolioCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Image URL * (direct image link)</label>
+                      <input className={inputCls} placeholder="https://images.unsplash.com/..." value={newPortfolioItem.image_url} onChange={e => setNewPortfolioItem(p => ({ ...p, image_url: e.target.value }))} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Video URL (optional — YouTube/Vimeo embed)</label>
+                      <input className={inputCls} placeholder="https://www.youtube.com/embed/..." value={newPortfolioItem.video_url} onChange={e => setNewPortfolioItem(p => ({ ...p, video_url: e.target.value }))} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Description</label>
+                      <textarea className={`${inputCls} resize-none`} rows={2} placeholder="Brief description..." value={newPortfolioItem.description} onChange={e => setNewPortfolioItem(p => ({ ...p, description: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" id="featured-new" checked={newPortfolioItem.featured} onChange={e => setNewPortfolioItem(p => ({ ...p, featured: e.target.checked }))} className="accent-primary" />
+                      <label htmlFor="featured-new" className="font-body text-xs text-muted-foreground">Featured on homepage</label>
+                    </div>
+                  </div>
+                  {/* Image preview */}
+                  {newPortfolioItem.image_url && (
+                    <div className="mt-2">
+                      <img src={newPortfolioItem.image_url} alt="Preview" className="h-32 w-auto object-cover border border-border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    <button onClick={addPortfolioItem} disabled={savingPortfolio || !newPortfolioItem.title || !newPortfolioItem.image_url}
+                      className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-widest uppercase px-6 py-2 hover:bg-primary-light transition-all disabled:opacity-50">
+                      {savingPortfolio ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Add to Portfolio
+                    </button>
+                    <button onClick={() => setShowAddPortfolio(false)} className="border border-border text-muted-foreground hover:text-foreground font-body text-xs tracking-widest uppercase px-4 py-2 transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Portfolio Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {portfolio.map((item) => (
+                <div key={item.id} className="border border-border bg-card hover:border-primary/30 transition-all overflow-hidden">
+                  {editingPortfolioId === item.id ? (
+                    <div className="p-5 space-y-3">
+                      <p className="font-body text-xs tracking-[0.3em] uppercase text-primary">Editing</p>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Title</label>
+                          <input className={inputCls} value={editPortfolioData.title || ""} onChange={e => setEditPortfolioData(p => ({ ...p, title: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Category</label>
+                          <select className={inputCls} value={editPortfolioData.category || "Photography"} onChange={e => setEditPortfolioData(p => ({ ...p, category: e.target.value }))}>
+                            {portfolioCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Image URL</label>
+                          <input className={inputCls} value={editPortfolioData.image_url || ""} onChange={e => setEditPortfolioData(p => ({ ...p, image_url: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Video URL</label>
+                          <input className={inputCls} value={editPortfolioData.video_url || ""} onChange={e => setEditPortfolioData(p => ({ ...p, video_url: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Description</label>
+                          <textarea className={`${inputCls} resize-none`} rows={2} value={editPortfolioData.description || ""} onChange={e => setEditPortfolioData(p => ({ ...p, description: e.target.value }))} />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <input type="checkbox" id={`featured-${item.id}`} checked={editPortfolioData.featured || false} onChange={e => setEditPortfolioData(p => ({ ...p, featured: e.target.checked }))} className="accent-primary" />
+                          <label htmlFor={`featured-${item.id}`} className="font-body text-xs text-muted-foreground">Featured</label>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button onClick={saveEditPortfolio} disabled={savingPortfolio}
+                          className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-widest uppercase px-5 py-2 hover:bg-primary-light transition-all disabled:opacity-50">
+                          {savingPortfolio ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save
+                        </button>
+                        <button onClick={() => setEditingPortfolioId(null)} className="border border-border text-muted-foreground font-body text-xs tracking-widest uppercase px-4 py-2 transition-all">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative aspect-video overflow-hidden">
+                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }} />
+                        {item.featured && (
+                          <div className="absolute top-2 left-2 bg-primary text-white font-body text-[9px] tracking-widest uppercase px-2 py-1 flex items-center gap-1">
+                            <Star size={8} fill="white" /> Featured
+                          </div>
+                        )}
+                        {item.video_url && (
+                          <div className="absolute top-2 right-2 bg-black/60 text-white font-body text-[9px] px-2 py-1 flex items-center gap-1">
+                            ▶ Video
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <p className="font-display text-lg text-foreground leading-tight">{item.title}</p>
+                            <p className="font-body text-[10px] text-primary tracking-widest uppercase">{item.category}</p>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button onClick={() => togglePortfolioFeatured(item.id, !item.featured)} title={item.featured ? "Remove from featured" : "Set as featured"}
+                              className={`p-1.5 transition-colors ${item.featured ? "text-primary" : "text-muted-foreground hover:text-primary"}`}>
+                              <Star size={12} fill={item.featured ? "currentColor" : "none"} />
+                            </button>
+                            <button onClick={() => startEditPortfolio(item)} className="text-muted-foreground hover:text-primary transition-colors p-1.5">
+                              <Edit2 size={12} />
+                            </button>
+                            <button onClick={() => deletePortfolioItem(item.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1.5">
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                        {item.description && <p className="font-body text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{item.description}</p>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              {portfolio.length === 0 && (
+                <div className="col-span-3 border border-border bg-card p-16 text-center">
+                  <Image className="text-muted-foreground mx-auto mb-3" size={28} />
+                  <p className="font-body text-xs text-muted-foreground">No portfolio items yet. Add your first piece above.</p>
                 </div>
               )}
             </div>
