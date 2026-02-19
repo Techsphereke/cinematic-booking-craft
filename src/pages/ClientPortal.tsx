@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import jtsLogo from "@/assets/jts-logo.png";
 import {
   Lock, Unlock, Download, Eye, Play, PoundSterling, Loader2,
   CalendarDays, Clock, MapPin, CheckCircle2, Sparkles,
@@ -423,10 +424,12 @@ export default function ClientPortal() {
                                       {projectFiles[selectedProject.id]?.filter(f => !f.isVideo).slice(0, 6).map((file, j) => (
                                         <div key={j} className="relative aspect-square overflow-hidden rounded-xl group cursor-pointer border" style={{ borderColor: "hsl(30,8%,18%)" }}
                                           onClick={() => !selectedProject.content_locked && setLightboxUrl(file.url)}>
-                                          <img src={file.url} alt={file.name} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${selectedProject.content_locked ? "opacity-50 blur-[1px]" : ""}`} />
+                                          <img src={file.url} alt={file.name} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${selectedProject.content_locked ? "opacity-60 blur-[2px]" : ""}`} />
                                           {selectedProject.content_locked ? (
-                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                                              <Lock size={16} className="text-amber-400" />
+                                            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center rounded-xl gap-2">
+                                              {/* Centered logo watermark */}
+                                              <img src={jtsLogo} alt="JT Studios Watermark" className="w-10 h-10 object-contain opacity-80 drop-shadow-lg" />
+                                              <span className="font-body text-[7px] tracking-[0.25em] uppercase text-white/60">Preview</span>
                                             </div>
                                           ) : (
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl gap-2">
@@ -496,10 +499,11 @@ export default function ClientPortal() {
                                         ).slice(0, 6).map((url, j) => (
                                           <div key={j} className="relative aspect-square overflow-hidden rounded-xl group border cursor-pointer" style={{ borderColor: "hsl(30,8%,18%)" }}
                                             onClick={() => !selectedProject.content_locked && setLightboxUrl(url)}>
-                                            <img src={url} alt={`Photo ${j + 1}`} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${selectedProject.content_locked ? "opacity-50" : ""}`} />
+                                            <img src={url} alt={`Photo ${j + 1}`} className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${selectedProject.content_locked ? "opacity-60 blur-[2px]" : ""}`} />
                                             {selectedProject.content_locked ? (
-                                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                                                <Lock size={16} className="text-amber-400" />
+                                              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center rounded-xl gap-2">
+                                                <img src={jtsLogo} alt="JT Studios Watermark" className="w-10 h-10 object-contain opacity-80 drop-shadow-lg" />
+                                                <span className="font-body text-[7px] tracking-[0.25em] uppercase text-white/60">Preview</span>
                                               </div>
                                             ) : (
                                               <a href={url} download className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all rounded-xl">
