@@ -54,7 +54,7 @@ export default function Booking() {
     return Math.max(0, diff / 60);
   })();
   const estimatedTotal = selectedService ? totalHours * selectedService.hourly_rate : 0;
-  const depositAmount = estimatedTotal * 0.5;
+  const depositAmount = estimatedTotal * 0.3;
   const remainingBalance = estimatedTotal - depositAmount;
 
   useEffect(() => {
@@ -145,6 +145,53 @@ export default function Booking() {
       setBookingRef(ref);
       setSubmitted(true);
 
+      // Send confirmation emails (fire & forget — don't block payment)
+      if (booking) {
+        const clientEmailHtml = `
+          <div style="font-family:'Montserrat',sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:40px;border:1px solid #e8e0d4;">
+            <h2 style="font-family:'Cormorant Garamond',serif;color:#7a5a1e;margin-bottom:8px;">Booking Confirmed — ${ref}</h2>
+            <p style="color:#444;font-size:14px;">Dear ${form.full_name},</p>
+            <p style="color:#444;font-size:14px;">Thank you for booking with <strong>JT Studios & Events</strong>. Your booking has been received and is awaiting your 30% deposit to confirm your date.</p>
+            <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Booking Ref</td><td style="padding:8px 0;font-size:12px;font-weight:600;border-bottom:1px solid #eee;">${ref}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Service</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${selectedService!.name}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Event Date</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_date}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Event Type</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_type}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Location</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.location}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Deposit Due (30%)</td><td style="padding:8px 0;font-size:12px;font-weight:600;color:#7a5a1e;border-bottom:1px solid #eee;">£${depositAmount.toFixed(2)}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Total Estimated</td><td style="padding:8px 0;font-size:12px;">£${estimatedTotal.toFixed(2)}</td></tr>
+            </table>
+            <p style="color:#444;font-size:13px;">You will be redirected to our secure payment page to pay your 30% deposit. If not, please contact us at <a href="mailto:bookings@jtstudios.events" style="color:#7a5a1e;">bookings@jtstudios.events</a>.</p>
+            <p style="color:#888;font-size:12px;margin-top:32px;">JT Studios & Events · +44 7916 843781</p>
+          </div>`;
+
+        const adminEmailHtml = `
+          <div style="font-family:'Montserrat',sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:40px;border:1px solid #e8e0d4;">
+            <h2 style="font-family:'Cormorant Garamond',serif;color:#7a5a1e;">New Booking — ${ref}</h2>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Client</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.full_name}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Email</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.email}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.phone}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Service</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${selectedService!.name}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Event Date</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_date}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Event Type</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_type}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Location</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.location}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Deposit (30%)</td><td style="padding:8px 0;font-size:12px;font-weight:600;color:#7a5a1e;border-bottom:1px solid #eee;">£${depositAmount.toFixed(2)}</td></tr>
+              <tr><td style="padding:8px 0;color:#888;font-size:12px;">Total</td><td style="padding:8px 0;font-size:12px;">£${estimatedTotal.toFixed(2)}</td></tr>
+            </table>
+            ${form.special_notes ? `<p style="font-size:12px;color:#444;"><strong>Notes:</strong> ${form.special_notes}</p>` : ''}
+          </div>`;
+
+        Promise.all([
+          supabase.functions.invoke("send-email", {
+            body: { to: form.email, subject: `Booking Confirmed — ${ref} | JT Studios & Events`, html: clientEmailHtml },
+          }),
+          supabase.functions.invoke("send-email", {
+            body: { to: "bookings@jtstudios.events", subject: `New Booking — ${ref} — ${form.full_name}`, html: adminEmailHtml },
+          }),
+        ]).catch(console.error);
+      }
+
       // Trigger deposit payment
       if (booking) {
         const { data: sessionData, error: stripeError } = await supabase.functions.invoke("create-booking-payment", {
@@ -158,7 +205,7 @@ export default function Booking() {
         });
 
         if (stripeError || !sessionData?.url) {
-          toast({ title: "Booking saved! Stripe payment setup pending. Admin will contact you.", });
+          toast({ title: "Booking saved! We'll be in touch with payment details." });
           return;
         }
 
@@ -200,7 +247,7 @@ export default function Booking() {
           Book Your Event
         </motion.h1>
         <p className="font-body text-muted-foreground text-sm max-w-lg mx-auto">
-          Complete the form below. A 50% deposit via Stripe secures your date — remaining balance due on completion.
+          Complete the form below. A 30% deposit via Stripe secures your date — remaining balance due on completion.
         </p>
       </div>
 
@@ -306,7 +353,7 @@ export default function Booking() {
             className="w-full py-5 bg-primary text-primary-foreground font-body text-xs tracking-[0.3em] uppercase hover:bg-primary-light transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <PoundSterling size={16} />}
-            {loading ? "Processing..." : "Confirm & Pay 50% Deposit"}
+            {loading ? "Processing..." : "Confirm & Pay 30% Deposit"}
           </button>
         </form>
 
@@ -335,7 +382,7 @@ export default function Booking() {
                       <span className="font-body text-sm text-foreground">£{estimatedTotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between mb-2">
-                      <span className="font-body text-xs text-primary">50% Deposit (due now)</span>
+                      <span className="font-body text-xs text-primary">30% Deposit (due now)</span>
                       <span className="font-body text-sm text-primary font-medium">£{depositAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">

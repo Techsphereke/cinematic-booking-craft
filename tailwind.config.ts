@@ -58,6 +58,7 @@ export default {
         },
         charcoal: "hsl(var(--charcoal))",
         surface: "hsl(var(--surface))",
+        slate: "hsl(var(--slate))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

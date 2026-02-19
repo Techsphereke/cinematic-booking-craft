@@ -64,6 +64,49 @@ export default function Quote() {
         message: form.message,
       });
       if (error) throw error;
+
+      // Send confirmation emails (fire & forget)
+      const clientHtml = `
+        <div style="font-family:'Montserrat',sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:40px;border:1px solid #e8e0d4;">
+          <h2 style="font-family:'Cormorant Garamond',serif;color:#7a5a1e;">Quote Request Received</h2>
+          <p style="color:#444;font-size:14px;">Dear ${form.full_name},</p>
+          <p style="color:#444;font-size:14px;">Thank you for reaching out to <strong>JT Studios & Events</strong>. We've received your quote request and our team will review it and respond within <strong>24–48 hours</strong>.</p>
+          <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+            <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Service Interest</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.service_interest}</td></tr>
+            ${form.event_type ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Event Type</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_type}</td></tr>` : ''}
+            ${form.event_date ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Approximate Date</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_date}</td></tr>` : ''}
+            ${form.budget_range ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Budget Range</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.budget_range}</td></tr>` : ''}
+          </table>
+          <p style="color:#444;font-size:13px;">A member of our team will be in touch shortly. In the meantime, feel free to contact us at <a href="mailto:bookings@jtstudios.events" style="color:#7a5a1e;">bookings@jtstudios.events</a> or call <strong>+44 7916 843781</strong>.</p>
+          <p style="color:#888;font-size:12px;margin-top:32px;">JT Studios & Events</p>
+        </div>`;
+
+      const adminHtml = `
+        <div style="font-family:'Montserrat',sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:40px;border:1px solid #e8e0d4;">
+          <h2 style="font-family:'Cormorant Garamond',serif;color:#7a5a1e;">New Quote Request</h2>
+          <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+            <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Name</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.full_name}</td></tr>
+            <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Email</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.email}</td></tr>
+            <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.phone}</td></tr>
+            <tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Service</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.service_interest}</td></tr>
+            ${form.event_type ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Event Type</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_type}</td></tr>` : ''}
+            ${form.event_date ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Date</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.event_date}</td></tr>` : ''}
+            ${form.location ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Location</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.location}</td></tr>` : ''}
+            ${form.budget_range ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Budget</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.budget_range}</td></tr>` : ''}
+            ${form.guests_estimate ? `<tr><td style="padding:8px 0;color:#888;font-size:12px;border-bottom:1px solid #eee;">Guests</td><td style="padding:8px 0;font-size:12px;border-bottom:1px solid #eee;">${form.guests_estimate}</td></tr>` : ''}
+          </table>
+          <p style="font-size:12px;color:#444;"><strong>Message:</strong><br/>${form.message}</p>
+        </div>`;
+
+      Promise.all([
+        supabase.functions.invoke("send-email", {
+          body: { to: form.email, subject: "Quote Request Received — JT Studios & Events", html: clientHtml },
+        }),
+        supabase.functions.invoke("send-email", {
+          body: { to: "bookings@jtstudios.events", subject: `New Quote Request — ${form.full_name} — ${form.service_interest}`, html: adminHtml },
+        }),
+      ]).catch(console.error);
+
       setSubmitted(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Submission failed";
