@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import ProjectsTab from "@/components/admin/ProjectsTab";
+import UsersTab from "@/components/admin/UsersTab";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
 } from "recharts";
@@ -11,6 +14,7 @@ import {
   Calendar, PoundSterling, BookOpen, Settings, Plus, Trash2, Loader2,
   MessageSquare, Mail, Phone, Eye, RefreshCw, CheckCircle, XCircle, Clock,
   TrendingUp, Users, ChevronRight, Edit2, Save, X, UserPlus, Briefcase, Image, Star,
+  FolderOpen, Lock, Unlock, Shield, ShieldOff, Video,
 } from "lucide-react";
 
 interface Booking {
@@ -89,7 +93,7 @@ const quoteStatusLabel: Record<string, string> = {
   new: "New", contacted: "Contacted", quoted: "Quoted", booked: "Booked", declined: "Declined",
 };
 
-type TabType = "overview" | "bookings" | "quotes" | "services" | "staff" | "portfolio" | "dates";
+type TabType = "overview" | "bookings" | "quotes" | "services" | "staff" | "portfolio" | "dates" | "projects" | "users";
 
 interface PortfolioItem {
   id: string;
@@ -388,6 +392,8 @@ export default function AdminDashboard() {
     { key: "overview", label: "Overview", icon: TrendingUp },
     { key: "bookings", label: "Bookings", icon: BookOpen, badge: bookings.filter(b => b.status === "pending_deposit").length || undefined },
     { key: "quotes", label: "Quotes", icon: MessageSquare, badge: newQuotes || undefined },
+    { key: "projects", label: "Projects", icon: FolderOpen },
+    { key: "users", label: "Users", icon: Shield },
     { key: "services", label: "Services", icon: Briefcase },
     { key: "staff", label: "Team", icon: Users },
     { key: "portfolio", label: "Portfolio", icon: Image },
@@ -1309,9 +1315,21 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ── PROJECTS ── */}
+        {tab === "projects" && (
+          <ProjectsTab bookings={bookings} inputCls={inputCls} />
+        )}
+
+        {/* ── USERS ── */}
+        {tab === "users" && (
+          <UsersTab inputCls={inputCls} />
+        )}
+
           </motion.div>
         </AnimatePresence>
       </div>
+      <Footer />
     </div>
   );
 }
+
