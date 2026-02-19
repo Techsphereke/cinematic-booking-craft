@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +10,7 @@ import {
 import {
   Calendar, PoundSterling, BookOpen, Settings, Plus, Trash2, Loader2,
   MessageSquare, Mail, Phone, Eye, RefreshCw, CheckCircle, XCircle, Clock,
-  TrendingUp, Users, ChevronRight,
+  TrendingUp, Users, ChevronRight, Edit2, Save, X, UserPlus, Briefcase,
 } from "lucide-react";
 
 interface Booking {
@@ -35,8 +35,21 @@ interface Booking {
 interface Service {
   id: string;
   name: string;
+  slug: string;
   hourly_rate: number;
   description?: string | null;
+  icon?: string | null;
+}
+
+interface StaffMember {
+  id: string;
+  full_name: string;
+  role: string;
+  email?: string | null;
+  phone?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+  active: boolean;
 }
 
 interface QuoteRequest {
@@ -76,7 +89,10 @@ const quoteStatusLabel: Record<string, string> = {
   new: "New", contacted: "Contacted", quoted: "Quoted", booked: "Booked", declined: "Declined",
 };
 
-type TabType = "overview" | "bookings" | "quotes" | "services" | "dates";
+type TabType = "overview" | "bookings" | "quotes" | "services" | "staff" | "dates";
+
+const emptyService = { name: "", slug: "", hourly_rate: 150, description: "", icon: "" };
+const emptyStaff = { full_name: "", role: "", email: "", phone: "", bio: "", avatar_url: "" };
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
@@ -84,6 +100,7 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<TabType>("overview");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [blockedDates, setBlockedDates] = useState<{ id: string; blocked_date: string; reason: string | null }[]>([]);
   const [newDate, setNewDate] = useState("");
@@ -93,6 +110,20 @@ export default function AdminDashboard() {
   const [selectedQuote, setSelectedQuote] = useState<QuoteRequest | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Service editing state
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editServiceData, setEditServiceData] = useState<Partial<Service>>({});
+  const [showAddService, setShowAddService] = useState(false);
+  const [newService, setNewService] = useState({ ...emptyService });
+  const [savingService, setSavingService] = useState(false);
+
+  // Staff state
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [editStaffData, setEditStaffData] = useState<Partial<StaffMember>>({});
+  const [newStaff, setNewStaff] = useState({ ...emptyStaff });
+  const [savingStaff, setSavingStaff] = useState(false);
+
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) navigate("/");
   }, [user, isAdmin, loading, navigate]);
@@ -100,16 +131,18 @@ export default function AdminDashboard() {
   const fetchAll = async () => {
     if (!isAdmin) return;
     setRefreshing(true);
-    const [bRes, sRes, qRes, dRes] = await Promise.all([
+    const [bRes, sRes, qRes, dRes, stRes] = await Promise.all([
       supabase.from("bookings").select("*, services(name)").order("created_at", { ascending: false }),
       supabase.from("services").select("*").order("name"),
       supabase.from("quote_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("blocked_dates").select("*").order("blocked_date"),
+      supabase.from("staff").select("*").order("full_name"),
     ]);
     if (bRes.data) setBookings(bRes.data);
     if (sRes.data) setServices(sRes.data);
     if (qRes.data) setQuotes(qRes.data);
     if (dRes.data) setBlockedDates(dRes.data);
+    if (stRes.data) setStaff(stRes.data);
     setRefreshing(false);
   };
 
@@ -134,9 +167,100 @@ export default function AdminDashboard() {
     setQuotes((prev) => prev.map((q) => q.id === id ? { ...q, admin_notes: notes } : q));
   };
 
-  const updateServiceRate = async (id: string, rate: number) => {
-    await supabase.from("services").update({ hourly_rate: rate }).eq("id", id);
-    setServices((prev) => prev.map((s) => s.id === id ? { ...s, hourly_rate: rate } : s));
+  // SERVICE CRUD
+  const startEditService = (service: Service) => {
+    setEditingServiceId(service.id);
+    setEditServiceData({ ...service });
+  };
+
+  const saveEditService = async () => {
+    if (!editingServiceId) return;
+    setSavingService(true);
+    await supabase.from("services").update({
+      name: editServiceData.name,
+      slug: editServiceData.slug || editServiceData.name?.toLowerCase().replace(/\s+/g, '-'),
+      hourly_rate: editServiceData.hourly_rate,
+      description: editServiceData.description,
+      icon: editServiceData.icon,
+    }).eq("id", editingServiceId);
+    setServices((prev) => prev.map((s) => s.id === editingServiceId ? { ...s, ...editServiceData } as Service : s));
+    setEditingServiceId(null);
+    setSavingService(false);
+  };
+
+  const addService = async () => {
+    if (!newService.name) return;
+    setSavingService(true);
+    const slug = newService.slug || newService.name.toLowerCase().replace(/\s+/g, '-');
+    const { data } = await supabase.from("services").insert({
+      name: newService.name,
+      slug,
+      hourly_rate: newService.hourly_rate,
+      description: newService.description || null,
+      icon: newService.icon || null,
+    }).select().single();
+    if (data) setServices((prev) => [...prev, data]);
+    setNewService({ ...emptyService });
+    setShowAddService(false);
+    setSavingService(false);
+  };
+
+  const deleteService = async (id: string) => {
+    if (!confirm("Delete this service? This cannot be undone.")) return;
+    await supabase.from("services").delete().eq("id", id);
+    setServices((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  // STAFF CRUD
+  const startEditStaff = (member: StaffMember) => {
+    setEditingStaffId(member.id);
+    setEditStaffData({ ...member });
+  };
+
+  const saveEditStaff = async () => {
+    if (!editingStaffId) return;
+    setSavingStaff(true);
+    await supabase.from("staff").update({
+      full_name: editStaffData.full_name,
+      role: editStaffData.role,
+      email: editStaffData.email,
+      phone: editStaffData.phone,
+      bio: editStaffData.bio,
+      avatar_url: editStaffData.avatar_url,
+      active: editStaffData.active,
+    }).eq("id", editingStaffId);
+    setStaff((prev) => prev.map((s) => s.id === editingStaffId ? { ...s, ...editStaffData } as StaffMember : s));
+    setEditingStaffId(null);
+    setSavingStaff(false);
+  };
+
+  const addStaff = async () => {
+    if (!newStaff.full_name || !newStaff.role) return;
+    setSavingStaff(true);
+    const { data } = await supabase.from("staff").insert({
+      full_name: newStaff.full_name,
+      role: newStaff.role,
+      email: newStaff.email || null,
+      phone: newStaff.phone || null,
+      bio: newStaff.bio || null,
+      avatar_url: newStaff.avatar_url || null,
+      active: true,
+    }).select().single();
+    if (data) setStaff((prev) => [...prev, data]);
+    setNewStaff({ ...emptyStaff });
+    setShowAddStaff(false);
+    setSavingStaff(false);
+  };
+
+  const toggleStaffActive = async (id: string, active: boolean) => {
+    await supabase.from("staff").update({ active }).eq("id", id);
+    setStaff((prev) => prev.map((s) => s.id === id ? { ...s, active } : s));
+  };
+
+  const deleteStaff = async (id: string) => {
+    if (!confirm("Remove this team member?")) return;
+    await supabase.from("staff").delete().eq("id", id);
+    setStaff((prev) => prev.filter((s) => s.id !== id));
   };
 
   const addBlockedDate = async () => {
@@ -186,22 +310,40 @@ export default function AdminDashboard() {
     </div>
   );
 
-  const tabs: { key: TabType; label: string; badge?: number }[] = [
-    { key: "overview", label: "Overview" },
-    { key: "bookings", label: "Bookings", badge: bookings.filter(b => b.status === "pending_deposit").length || undefined },
-    { key: "quotes", label: "Quote Requests", badge: newQuotes || undefined },
-    { key: "services", label: "Services & Rates" },
-    { key: "dates", label: "Blocked Dates" },
+  const tabs: { key: TabType; label: string; icon: any; badge?: number }[] = [
+    { key: "overview", label: "Overview", icon: TrendingUp },
+    { key: "bookings", label: "Bookings", icon: BookOpen, badge: bookings.filter(b => b.status === "pending_deposit").length || undefined },
+    { key: "quotes", label: "Quotes", icon: MessageSquare, badge: newQuotes || undefined },
+    { key: "services", label: "Services", icon: Briefcase },
+    { key: "staff", label: "Team", icon: Users },
+    { key: "dates", label: "Calendar", icon: Calendar },
   ];
+
+  const inputCls = "w-full bg-input border border-border text-foreground font-body text-sm px-3 py-2 focus:outline-none focus:border-primary placeholder:text-muted-foreground/50";
 
   return (
     <div className="bg-background min-h-screen">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-28 pb-24">
-        <div className="flex items-center justify-between mb-10">
+
+      {/* Animated background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full opacity-[0.03]" style={{ background: "radial-gradient(circle, hsl(43,74%,60%), transparent)" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full opacity-[0.03]" style={{ background: "radial-gradient(circle, hsl(43,74%,60%), transparent)" }} />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 md:px-12 pt-28 pb-24 relative">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-10"
+        >
           <div>
-            <p className="font-body text-primary text-xs tracking-[0.4em] uppercase mb-2">Admin</p>
-            <h1 className="font-display text-5xl text-foreground">Dashboard</h1>
+            <p className="font-body text-primary text-xs tracking-[0.4em] uppercase mb-2">Admin Portal</p>
+            <h1 className="font-display text-5xl md:text-6xl text-foreground">Dashboard</h1>
+            <p className="font-body text-muted-foreground text-xs mt-2 tracking-widest">
+              {bookings.length} bookings · {quotes.length} quote requests · {staff.filter(s => s.active).length} active staff
+            </p>
           </div>
           <button
             onClick={fetchAll}
@@ -211,21 +353,22 @@ export default function AdminDashboard() {
             <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
             Refresh
           </button>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 border-b border-border overflow-x-auto">
+        <div className="flex gap-1 mb-8 border-b border-border overflow-x-auto scrollbar-none">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`relative font-body text-xs tracking-[0.2em] uppercase px-6 py-3 border-b-2 whitespace-nowrap transition-all duration-300 ${
+              className={`relative flex items-center gap-2 font-body text-xs tracking-[0.15em] uppercase px-5 py-3 border-b-2 whitespace-nowrap transition-all duration-300 ${
                 tab === t.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
+              <t.icon size={12} />
               {t.label}
               {t.badge ? (
-                <span className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
+                <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {t.badge}
                 </span>
               ) : null}
@@ -233,15 +376,23 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+
         {/* ── OVERVIEW ── */}
         {tab === "overview" && (
           <div className="space-y-6">
-            {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Total Bookings", value: bookings.length, icon: BookOpen, color: "text-foreground", sub: `${bookings.filter(b => b.status === "pending_deposit").length} pending` },
-                { label: "Total Revenue", value: `£${totalRevenue.toFixed(0)}`, icon: PoundSterling, color: "text-primary", sub: "Fully paid" },
-                { label: "Deposits In", value: `£${depositsReceived.toFixed(0)}`, icon: TrendingUp, color: "text-blue-400", sub: `£${pendingBalance.toFixed(0)} balance pending` },
+                { label: "Total Bookings", value: bookings.length, icon: BookOpen, color: "text-foreground", sub: `${bookings.filter(b => b.status === "pending_deposit").length} deposit pending` },
+                { label: "Total Revenue", value: `£${totalRevenue.toFixed(0)}`, icon: PoundSterling, color: "text-primary", sub: "From completed events" },
+                { label: "Deposits In", value: `£${depositsReceived.toFixed(0)}`, icon: TrendingUp, color: "text-blue-400", sub: `£${pendingBalance.toFixed(0)} balance due` },
                 { label: "New Quotes", value: newQuotes, icon: MessageSquare, color: "text-yellow-400", sub: `${quotes.length} total requests` },
               ].map((stat, i) => (
                 <motion.div
@@ -249,9 +400,9 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 }}
-                  className="border border-border bg-card p-6 hover:border-primary/30 transition-all"
+                  className="border border-border bg-card p-6 hover:border-primary/30 transition-all group"
                 >
-                  <stat.icon className={`${stat.color} mb-3`} size={20} />
+                  <stat.icon className={`${stat.color} mb-3 group-hover:scale-110 transition-transform`} size={20} />
                   <p className={`font-display text-3xl ${stat.color} mb-1`}>{stat.value}</p>
                   <p className="font-body text-xs text-muted-foreground tracking-widest mb-1">{stat.label}</p>
                   <p className="font-body text-[10px] text-muted-foreground/60">{stat.sub}</p>
@@ -259,21 +410,20 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 border border-border bg-card p-6">
-                <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Revenue & Bookings (6 Months)</p>
+                <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Revenue (6 Months)</p>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={monthlyRevenue}>
                     <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                     <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 0 }} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 0, fontFamily: "Montserrat" }} />
                     <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))", r: 3 }} name="Revenue (£)" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
               <div className="border border-border bg-card p-6">
-                <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Bookings by Service</p>
+                <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">By Service</p>
                 {serviceDistribution.length > 0 ? (
                   <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
@@ -299,25 +449,45 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Recent activity */}
-            <div className="border border-border bg-card p-6">
-              <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Recent Bookings</p>
-              <div className="space-y-3">
-                {bookings.slice(0, 5).map((b) => (
-                  <div key={b.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <div>
-                      <p className="font-body text-sm text-foreground">{b.full_name}</p>
-                      <p className="font-body text-xs text-muted-foreground">{b.event_type} · {b.event_date}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border border-border bg-card p-6">
+                <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Recent Bookings</p>
+                <div className="space-y-3">
+                  {bookings.slice(0, 5).map((b) => (
+                    <div key={b.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="font-body text-sm text-foreground">{b.full_name}</p>
+                        <p className="font-body text-xs text-muted-foreground">{b.event_type} · {b.event_date}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-body text-sm text-primary">£{b.estimated_total?.toFixed(0)}</p>
+                        <span className={`font-body text-[10px] tracking-widest uppercase px-2 py-0.5 ${statusClass[b.status] || ""}`}>
+                          {statusLabel[b.status]}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-body text-sm text-primary">£{b.estimated_total?.toFixed(0)}</p>
-                      <span className={`font-body text-[10px] tracking-widest uppercase px-2 py-0.5 ${statusClass[b.status] || ""}`}>
-                        {statusLabel[b.status]}
+                  ))}
+                  {bookings.length === 0 && <p className="font-body text-xs text-muted-foreground text-center py-4">No bookings yet</p>}
+                </div>
+              </div>
+              <div className="border border-border bg-card p-6">
+                <p className="font-body text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">Recent Quotes</p>
+                <div className="space-y-3">
+                  {quotes.slice(0, 5).map((q) => (
+                    <div key={q.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="font-body text-sm text-foreground">{q.full_name}</p>
+                        <p className="font-body text-xs text-muted-foreground">{q.service_interest}</p>
+                      </div>
+                      <span className={`font-body text-[10px] tracking-widest uppercase px-2 py-0.5 ${
+                        q.status === "new" ? "status-pending" : q.status === "booked" ? "status-paid" : q.status === "declined" ? "status-cancelled" : "status-deposit"
+                      }`}>
+                        {quoteStatusLabel[q.status]}
                       </span>
                     </div>
-                  </div>
-                ))}
-                {bookings.length === 0 && <p className="font-body text-xs text-muted-foreground text-center py-4">No bookings yet</p>}
+                  ))}
+                  {quotes.length === 0 && <p className="font-body text-xs text-muted-foreground text-center py-4">No quotes yet</p>}
+                </div>
               </div>
             </div>
           </div>
@@ -326,7 +496,7 @@ export default function AdminDashboard() {
         {/* ── BOOKINGS ── */}
         {tab === "bookings" && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-2 space-y-3">
+            <div className="lg:col-span-2 space-y-3 max-h-[80vh] overflow-y-auto pr-1">
               {bookings.map((booking) => (
                 <div
                   key={booking.id}
@@ -349,7 +519,6 @@ export default function AdminDashboard() {
               {bookings.length === 0 && <p className="font-body text-xs text-muted-foreground text-center py-8">No bookings yet.</p>}
             </div>
 
-            {/* Booking Detail Panel */}
             <div className="lg:col-span-3">
               {selectedBooking ? (
                 <motion.div
@@ -382,25 +551,23 @@ export default function AdminDashboard() {
                           <item.icon size={10} className="text-muted-foreground" />
                           <p className="font-body text-[10px] tracking-widest uppercase text-muted-foreground">{item.label}</p>
                         </div>
-                        <p className="font-body text-foreground">{item.value}</p>
+                        <p className="font-body text-foreground text-sm">{item.value}</p>
                       </div>
                     ))}
                   </div>
 
                   <div className="border border-primary/20 bg-primary/5 p-4 space-y-2">
                     <p className="font-body text-xs tracking-widest uppercase text-primary mb-2">Financials</p>
-                    <div className="flex justify-between font-body text-sm">
-                      <span className="text-muted-foreground">Estimated Total</span>
-                      <span className="text-foreground">£{selectedBooking.estimated_total?.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-body text-sm">
-                      <span className="text-muted-foreground">Deposit (50%)</span>
-                      <span className="text-primary">£{selectedBooking.deposit_amount?.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-body text-sm">
-                      <span className="text-muted-foreground">Remaining Balance</span>
-                      <span className="text-foreground">£{selectedBooking.remaining_balance?.toFixed(2)}</span>
-                    </div>
+                    {[
+                      { label: "Estimated Total", value: `£${selectedBooking.estimated_total?.toFixed(2)}`, highlight: false },
+                      { label: "Deposit (50%)", value: `£${selectedBooking.deposit_amount?.toFixed(2)}`, highlight: true },
+                      { label: "Remaining Balance", value: `£${selectedBooking.remaining_balance?.toFixed(2)}`, highlight: false },
+                    ].map((row) => (
+                      <div key={row.label} className="flex justify-between font-body text-sm">
+                        <span className="text-muted-foreground">{row.label}</span>
+                        <span className={row.highlight ? "text-primary font-medium" : "text-foreground"}>{row.value}</span>
+                      </div>
+                    ))}
                   </div>
 
                   {selectedBooking.special_notes && (
@@ -440,7 +607,7 @@ export default function AdminDashboard() {
                   </div>
                 </motion.div>
               ) : (
-                <div className="border border-border bg-card p-12 text-center">
+                <div className="border border-border bg-card p-16 text-center">
                   <ChevronRight className="text-muted-foreground mx-auto mb-3" size={24} />
                   <p className="font-body text-xs text-muted-foreground">Select a booking to view details</p>
                 </div>
@@ -452,7 +619,7 @@ export default function AdminDashboard() {
         {/* ── QUOTE REQUESTS ── */}
         {tab === "quotes" && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-2 space-y-3">
+            <div className="lg:col-span-2 space-y-3 max-h-[80vh] overflow-y-auto pr-1">
               {quotes.map((quote) => (
                 <div
                   key={quote.id}
@@ -466,16 +633,14 @@ export default function AdminDashboard() {
                       {new Date(quote.created_at).toLocaleDateString("en-GB")}
                     </span>
                     <span className={`font-body text-[10px] tracking-widest uppercase px-2 py-0.5 ${
-                      quote.status === "new" ? "status-pending" :
-                      quote.status === "booked" ? "status-paid" :
-                      quote.status === "declined" ? "status-cancelled" : "status-deposit"
+                      quote.status === "new" ? "status-pending" : quote.status === "booked" ? "status-paid" : quote.status === "declined" ? "status-cancelled" : "status-deposit"
                     }`}>
                       {quoteStatusLabel[quote.status]}
                     </span>
                   </div>
                   <p className="font-display text-lg text-foreground">{quote.full_name}</p>
-                  <p className="font-body text-xs text-muted-foreground">{quote.service_interest}</p>
-                  <p className="font-body text-xs text-muted-foreground">{quote.event_type}</p>
+                  <p className="font-body text-xs text-muted-foreground">{quote.service_interest} · {quote.event_type}</p>
+                  {quote.budget_range && <p className="font-body text-xs text-primary mt-1">{quote.budget_range}</p>}
                 </div>
               ))}
               {quotes.length === 0 && <p className="font-body text-xs text-muted-foreground text-center py-8">No quote requests yet.</p>}
@@ -492,9 +657,7 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between">
                     <h3 className="font-display text-3xl text-foreground">{selectedQuote.full_name}</h3>
                     <span className={`font-body text-[10px] tracking-widest uppercase px-3 py-1 ${
-                      selectedQuote.status === "new" ? "status-pending" :
-                      selectedQuote.status === "booked" ? "status-paid" :
-                      selectedQuote.status === "declined" ? "status-cancelled" : "status-deposit"
+                      selectedQuote.status === "new" ? "status-pending" : selectedQuote.status === "booked" ? "status-paid" : selectedQuote.status === "declined" ? "status-cancelled" : "status-deposit"
                     }`}>
                       {quoteStatusLabel[selectedQuote.status]}
                     </span>
@@ -513,7 +676,7 @@ export default function AdminDashboard() {
                     ].map((item) => (
                       <div key={item.label} className="border border-border p-3">
                         <p className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1">{item.label}</p>
-                        <p className="font-body text-foreground">{item.value}</p>
+                        <p className="font-body text-foreground text-sm">{item.value}</p>
                       </div>
                     ))}
                   </div>
@@ -554,16 +717,18 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="flex gap-3">
-                    <a href={`mailto:${selectedQuote.email}`} className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-light transition-all py-3 font-body text-xs tracking-widest">
+                    <a href={`mailto:${selectedQuote.email}?subject=Re: Your Quote Request — JT Studios & Events`}
+                      className="flex-1 flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-light transition-all py-3 font-body text-xs tracking-widest">
                       <Mail size={12} /> Reply by Email
                     </a>
-                    <a href={`tel:${selectedQuote.phone}`} className="flex-1 flex items-center justify-center gap-2 border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all py-3 font-body text-xs tracking-widest">
+                    <a href={`tel:${selectedQuote.phone}`}
+                      className="flex-1 flex items-center justify-center gap-2 border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all py-3 font-body text-xs tracking-widest">
                       <Phone size={12} /> Call
                     </a>
                   </div>
                 </motion.div>
               ) : (
-                <div className="border border-border bg-card p-12 text-center">
+                <div className="border border-border bg-card p-16 text-center">
                   <MessageSquare className="text-muted-foreground mx-auto mb-3" size={24} />
                   <p className="font-body text-xs text-muted-foreground">Select a quote request to view details</p>
                 </div>
@@ -574,27 +739,296 @@ export default function AdminDashboard() {
 
         {/* ── SERVICES ── */}
         {tab === "services" && (
-          <div className="space-y-3">
-            {services.map((service) => (
-              <div key={service.id} className="border border-border bg-card p-6 flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-display text-xl text-foreground">{service.name}</p>
-                  {service.description && <p className="font-body text-xs text-muted-foreground mt-1">{service.description}</p>}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="font-body text-xs text-muted-foreground tracking-widest">Manage your service offerings and hourly rates.</p>
+              <button
+                onClick={() => setShowAddService(!showAddService)}
+                className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-[0.2em] uppercase px-5 py-2 hover:bg-primary-light transition-all"
+              >
+                <Plus size={12} /> Add Service
+              </button>
+            </div>
+
+            {/* Add Service Form */}
+            <AnimatePresence>
+              {showAddService && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="border border-primary/40 bg-card p-6 space-y-4"
+                >
+                  <p className="font-body text-xs tracking-[0.3em] uppercase text-primary">New Service</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Service Name *</label>
+                      <input className={inputCls} placeholder="e.g. Wedding Photography" value={newService.name} onChange={e => setNewService(p => ({ ...p, name: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Hourly Rate (£) *</label>
+                      <input className={inputCls} type="number" placeholder="150" value={newService.hourly_rate} onChange={e => setNewService(p => ({ ...p, hourly_rate: parseFloat(e.target.value) }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Icon (emoji)</label>
+                      <input className={inputCls} placeholder="📸" value={newService.icon} onChange={e => setNewService(p => ({ ...p, icon: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Slug (auto-generated if empty)</label>
+                      <input className={inputCls} placeholder="wedding-photography" value={newService.slug} onChange={e => setNewService(p => ({ ...p, slug: e.target.value }))} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Description</label>
+                      <textarea className={`${inputCls} resize-none`} rows={2} placeholder="Service description..." value={newService.description} onChange={e => setNewService(p => ({ ...p, description: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={addService} disabled={savingService || !newService.name}
+                      className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-widest uppercase px-6 py-2 hover:bg-primary-light transition-all disabled:opacity-50">
+                      {savingService ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save Service
+                    </button>
+                    <button onClick={() => setShowAddService(false)} className="border border-border text-muted-foreground hover:text-foreground font-body text-xs tracking-widest uppercase px-4 py-2 transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Service List */}
+            <div className="space-y-3">
+              {services.map((service) => (
+                <div key={service.id} className="border border-border bg-card hover:border-primary/30 transition-all">
+                  {editingServiceId === service.id ? (
+                    <div className="p-6 space-y-4">
+                      <p className="font-body text-xs tracking-[0.3em] uppercase text-primary">Editing: {service.name}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Service Name</label>
+                          <input className={inputCls} value={editServiceData.name || ""} onChange={e => setEditServiceData(p => ({ ...p, name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Hourly Rate (£)</label>
+                          <input className={inputCls} type="number" value={editServiceData.hourly_rate || 0} onChange={e => setEditServiceData(p => ({ ...p, hourly_rate: parseFloat(e.target.value) }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Icon (emoji)</label>
+                          <input className={inputCls} value={editServiceData.icon || ""} onChange={e => setEditServiceData(p => ({ ...p, icon: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Slug</label>
+                          <input className={inputCls} value={editServiceData.slug || ""} onChange={e => setEditServiceData(p => ({ ...p, slug: e.target.value }))} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Description</label>
+                          <textarea className={`${inputCls} resize-none`} rows={2} value={editServiceData.description || ""} onChange={e => setEditServiceData(p => ({ ...p, description: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button onClick={saveEditService} disabled={savingService}
+                          className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-widest uppercase px-6 py-2 hover:bg-primary-light transition-all disabled:opacity-50">
+                          {savingService ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save
+                        </button>
+                        <button onClick={() => setEditingServiceId(null)} className="border border-border text-muted-foreground hover:text-foreground font-body text-xs tracking-widest uppercase px-4 py-2 transition-all">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-5 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        {service.icon && <span className="text-2xl">{service.icon}</span>}
+                        <div>
+                          <p className="font-display text-xl text-foreground">{service.name}</p>
+                          {service.description && <p className="font-body text-xs text-muted-foreground mt-0.5 max-w-md">{service.description}</p>}
+                          <p className="font-body text-xs text-muted-foreground/50 mt-0.5">/{service.slug}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-display text-2xl text-primary">£{service.hourly_rate}</p>
+                          <p className="font-body text-[10px] text-muted-foreground">per hour</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => startEditService(service)} className="text-muted-foreground hover:text-primary transition-colors p-2">
+                            <Edit2 size={14} />
+                          </button>
+                          <button onClick={() => deleteService(service.id)} className="text-muted-foreground hover:text-destructive transition-colors p-2">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body text-xs text-muted-foreground">£</span>
-                  <input
-                    type="number"
-                    value={service.hourly_rate}
-                    onChange={(e) => setServices((prev) => prev.map((s) => s.id === service.id ? { ...s, hourly_rate: parseFloat(e.target.value) } : s))}
-                    onBlur={(e) => updateServiceRate(service.id, parseFloat(e.target.value))}
-                    className="w-24 bg-input border border-border text-foreground font-body text-sm px-3 py-2 focus:outline-none focus:border-primary"
-                  />
-                  <span className="font-body text-xs text-muted-foreground">/hr</span>
+              ))}
+              {services.length === 0 && (
+                <div className="border border-border bg-card p-12 text-center">
+                  <Briefcase className="text-muted-foreground mx-auto mb-3" size={24} />
+                  <p className="font-body text-xs text-muted-foreground">No services yet. Add your first service above.</p>
                 </div>
-              </div>
-            ))}
-            <p className="font-body text-xs text-muted-foreground">Changes save automatically on blur.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── STAFF / TEAM ── */}
+        {tab === "staff" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="font-body text-xs text-muted-foreground tracking-widest">
+                {staff.filter(s => s.active).length} active · {staff.filter(s => !s.active).length} inactive team members
+              </p>
+              <button
+                onClick={() => setShowAddStaff(!showAddStaff)}
+                className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-[0.2em] uppercase px-5 py-2 hover:bg-primary-light transition-all"
+              >
+                <UserPlus size={12} /> Add Member
+              </button>
+            </div>
+
+            {/* Add Staff Form */}
+            <AnimatePresence>
+              {showAddStaff && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="border border-primary/40 bg-card p-6 space-y-4"
+                >
+                  <p className="font-body text-xs tracking-[0.3em] uppercase text-primary">New Team Member</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Full Name *</label>
+                      <input className={inputCls} placeholder="e.g. James Thompson" value={newStaff.full_name} onChange={e => setNewStaff(p => ({ ...p, full_name: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Role / Title *</label>
+                      <input className={inputCls} placeholder="e.g. Lead Photographer" value={newStaff.role} onChange={e => setNewStaff(p => ({ ...p, role: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Email</label>
+                      <input className={inputCls} type="email" placeholder="team@jtstudios.com" value={newStaff.email} onChange={e => setNewStaff(p => ({ ...p, email: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Phone</label>
+                      <input className={inputCls} placeholder="+44 7xxx xxxxxx" value={newStaff.phone} onChange={e => setNewStaff(p => ({ ...p, phone: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Avatar URL</label>
+                      <input className={inputCls} placeholder="https://..." value={newStaff.avatar_url} onChange={e => setNewStaff(p => ({ ...p, avatar_url: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Bio</label>
+                      <input className={inputCls} placeholder="Short bio..." value={newStaff.bio} onChange={e => setNewStaff(p => ({ ...p, bio: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={addStaff} disabled={savingStaff || !newStaff.full_name || !newStaff.role}
+                      className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-widest uppercase px-6 py-2 hover:bg-primary-light transition-all disabled:opacity-50">
+                      {savingStaff ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Add Member
+                    </button>
+                    <button onClick={() => setShowAddStaff(false)} className="border border-border text-muted-foreground hover:text-foreground font-body text-xs tracking-widest uppercase px-4 py-2 transition-all">
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Staff List */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {staff.map((member) => (
+                <div key={member.id} className={`border bg-card transition-all ${member.active ? "border-border hover:border-primary/30" : "border-border/40 opacity-60"}`}>
+                  {editingStaffId === member.id ? (
+                    <div className="p-5 space-y-3">
+                      <p className="font-body text-xs tracking-[0.3em] uppercase text-primary">Editing</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Full Name</label>
+                          <input className={inputCls} value={editStaffData.full_name || ""} onChange={e => setEditStaffData(p => ({ ...p, full_name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Role</label>
+                          <input className={inputCls} value={editStaffData.role || ""} onChange={e => setEditStaffData(p => ({ ...p, role: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Email</label>
+                          <input className={inputCls} value={editStaffData.email || ""} onChange={e => setEditStaffData(p => ({ ...p, email: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Phone</label>
+                          <input className={inputCls} value={editStaffData.phone || ""} onChange={e => setEditStaffData(p => ({ ...p, phone: e.target.value }))} />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Bio</label>
+                          <input className={inputCls} value={editStaffData.bio || ""} onChange={e => setEditStaffData(p => ({ ...p, bio: e.target.value }))} />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="font-body text-[10px] tracking-widest uppercase text-muted-foreground mb-1 block">Avatar URL</label>
+                          <input className={inputCls} value={editStaffData.avatar_url || ""} onChange={e => setEditStaffData(p => ({ ...p, avatar_url: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button onClick={saveEditStaff} disabled={savingStaff}
+                          className="flex items-center gap-2 bg-primary text-primary-foreground font-body text-xs tracking-widest uppercase px-5 py-2 hover:bg-primary-light transition-all disabled:opacity-50">
+                          {savingStaff ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save
+                        </button>
+                        <button onClick={() => setEditingStaffId(null)} className="border border-border text-muted-foreground font-body text-xs tracking-widest uppercase px-4 py-2 transition-all">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-5 flex items-start gap-4">
+                      {/* Avatar */}
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {member.avatar_url ? (
+                          <img src={member.avatar_url} alt={member.full_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-display text-xl text-primary">{member.full_name.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-display text-lg text-foreground">{member.full_name}</p>
+                            <p className="font-body text-xs text-primary tracking-widest">{member.role}</p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => toggleStaffActive(member.id, !member.active)}
+                              className={`font-body text-[9px] tracking-widest uppercase px-2 py-1 transition-all border ${
+                                member.active ? "border-green-500/40 text-green-400 hover:border-red-500/40 hover:text-red-400" : "border-muted text-muted-foreground hover:border-green-500/40 hover:text-green-400"
+                              }`}
+                            >
+                              {member.active ? "Active" : "Inactive"}
+                            </button>
+                            <button onClick={() => startEditStaff(member)} className="text-muted-foreground hover:text-primary transition-colors p-1.5">
+                              <Edit2 size={12} />
+                            </button>
+                            <button onClick={() => deleteStaff(member.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1.5">
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                        {member.bio && <p className="font-body text-xs text-muted-foreground mt-1.5 leading-relaxed">{member.bio}</p>}
+                        <div className="flex flex-wrap gap-3 mt-2">
+                          {member.email && <a href={`mailto:${member.email}`} className="font-body text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1"><Mail size={10} />{member.email}</a>}
+                          {member.phone && <a href={`tel:${member.phone}`} className="font-body text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1"><Phone size={10} />{member.phone}</a>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {staff.length === 0 && (
+                <div className="col-span-2 border border-border bg-card p-12 text-center">
+                  <Users className="text-muted-foreground mx-auto mb-3" size={24} />
+                  <p className="font-body text-xs text-muted-foreground">No team members yet. Add your first team member above.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -618,10 +1052,12 @@ export default function AdminDashboard() {
               {blockedDates.map((bd) => (
                 <div key={bd.id} className="border border-border bg-card p-4 flex items-center justify-between">
                   <div>
-                    <p className="font-body text-sm text-foreground">{new Date(bd.blocked_date).toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+                    <p className="font-body text-sm text-foreground">
+                      {new Date(bd.blocked_date + 'T00:00:00').toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                    </p>
                     {bd.reason && <p className="font-body text-xs text-muted-foreground">{bd.reason}</p>}
                   </div>
-                  <button onClick={() => removeBlockedDate(bd.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                  <button onClick={() => removeBlockedDate(bd.id)} className="text-muted-foreground hover:text-destructive transition-colors p-2">
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -630,6 +1066,9 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
