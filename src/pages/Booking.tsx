@@ -216,8 +216,9 @@ export default function Booking() {
         window.location.href = sessionData.url;
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Booking failed";
-      toast({ title: "Error", description: msg, variant: "destructive" });
+      const msg = err instanceof Error ? err.message : "Booking failed. Please try again.";
+      console.error("Booking error:", err);
+      toast({ title: "Booking Failed", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
     }
