@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       if (existing.data.length > 0) customerId = existing.data[0].id;
     }
 
-    const origin = req.headers.get("origin") || "https://jtstudios.events";
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "").split("/").slice(0, 3).join("/") || "https://jtstudios-events.vercel.app";
     const label = deposit ? "50% Deposit" : "Remaining Balance";
     const description = deposit
       ? `JT Studios — ${service_name || "Service"} (Booking ${booking_ref}) - 50% Deposit`
