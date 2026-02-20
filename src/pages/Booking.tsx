@@ -145,7 +145,6 @@ export default function Booking() {
       if (error) throw error;
 
       setBookingRef(ref);
-      setSubmitted(true);
 
       // Send confirmation emails (fire & forget — don't block payment)
       if (booking) {
@@ -208,15 +207,13 @@ export default function Booking() {
 
         if (stripeError || !sessionData?.url) {
           toast({ title: "Booking saved! We'll be in touch with payment details." });
+          setSubmitted(true);
           return;
         }
 
-        // Use window.top to break out of preview iframes, fallback to window.open
-        if (window.top) {
-          window.top.location.href = sessionData.url;
-        } else {
-          window.open(sessionData.url, "_blank");
-        }
+        // Show "redirecting" screen then navigate
+        setSubmitted(true);
+        window.location.href = sessionData.url;
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Booking failed";
