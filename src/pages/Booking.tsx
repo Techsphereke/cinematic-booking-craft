@@ -116,11 +116,13 @@ export default function Booking() {
         return;
       }
 
-      // Generate booking ref
+      // Generate booking ref and ID client-side so guests don't need to read back
       const { data: refData } = await supabase.rpc("generate_booking_ref");
       const ref = refData || `JTS-${Date.now()}`;
+      const bookingId = crypto.randomUUID();
 
-      const { data: booking, error } = await supabase.from("bookings").insert({
+      const { error } = await supabase.from("bookings").insert({
+        id: bookingId,
         booking_ref: ref,
         client_user_id: user?.id || null,
         full_name: form.full_name,
@@ -140,9 +142,12 @@ export default function Booking() {
         deposit_amount: depositAmount,
         remaining_balance: remainingBalance,
         status: "pending_deposit",
-      }).select().single();
+      });
 
       if (error) throw error;
+
+      // Use the pre-generated booking data (no need to SELECT back)
+      const booking = { id: bookingId };
 
       setBookingRef(ref);
 
