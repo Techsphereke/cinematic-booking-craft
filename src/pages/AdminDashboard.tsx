@@ -14,7 +14,9 @@ import {
   TrendingUp, Users, Edit2, Save, X, UserPlus, Briefcase, Image, Star,
   FolderOpen, Lock, Unlock, Shield, ShieldOff, LayoutDashboard, Settings,
   ChevronLeft, ChevronRight, LogOut, Menu, Clock, Activity, Home,
+  FileText, FileSignature, Download,
 } from "lucide-react";
+import { generateBookingPDF, generateAgreementPDF } from "@/lib/pdfGenerator";
 
 interface Booking {
   id: string;
@@ -600,6 +602,31 @@ export default function AdminDashboard() {
                         <div className="flex gap-3">
                           <a href={`mailto:${selectedBooking.email}`} className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-all py-2.5 rounded-sm font-body text-xs tracking-wider"><Mail size={12} /> Email</a>
                           <a href={`tel:${selectedBooking.phone}`} className="flex-1 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-all py-2.5 rounded-sm font-body text-xs tracking-wider"><Phone size={12} /> Call</a>
+                        </div>
+                        {/* PDF Actions */}
+                        <div className="border-t border-zinc-800 pt-4">
+                          <p className="font-body text-[9px] tracking-widest uppercase text-zinc-500 mb-2.5">Documents</p>
+                          <div className="flex gap-2 flex-wrap">
+                            <button
+                              onClick={() => generateBookingPDF(selectedBooking)}
+                              className="flex items-center gap-2 border border-zinc-700 text-zinc-300 hover:border-primary hover:text-primary transition-all px-4 py-2 font-body text-xs tracking-wider rounded-sm"
+                            >
+                              <FileText size={12} />
+                              Booking PDF
+                            </button>
+                            {["deposit_paid", "fully_paid", "completed"].includes(selectedBooking.status) && (
+                              <button
+                                onClick={() => generateAgreementPDF(selectedBooking)}
+                                className="flex items-center gap-2 bg-primary/10 border border-primary/40 text-primary hover:bg-primary/20 transition-all px-4 py-2 font-body text-xs tracking-wider rounded-sm"
+                              >
+                                <FileSignature size={12} />
+                                Service Agreement PDF
+                              </button>
+                            )}
+                          </div>
+                          {!["deposit_paid", "fully_paid", "completed"].includes(selectedBooking.status) && (
+                            <p className="font-body text-[9px] text-zinc-600 mt-2">Agreement PDF available once deposit is paid</p>
+                          )}
                         </div>
                       </motion.div>
                     ) : (
