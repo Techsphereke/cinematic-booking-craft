@@ -117,7 +117,7 @@ export default function Footer() {
               {[
                 { num: "80+", label: "Events" },
                 { num: "5★", label: "Rating" },
-                { num: "30%", label: "Deposit" },
+                { num: "60%", label: "Deposit" },
                 { num: "24hr", label: "Response" },
               ].map((s) => (
                 <div key={s.label} className="border border-white/8 p-3 text-center hover:border-primary/30 transition-colors">

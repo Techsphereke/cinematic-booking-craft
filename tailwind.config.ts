@@ -12,8 +12,20 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Cormorant Garamond", "serif"],
-        body: ["Montserrat", "sans-serif"],
+        display: ["Playfair Display", "serif"],
+        body: ["DM Sans", "sans-serif"],
+      },
+      fontSize: {
+        xs: ["0.8125rem", { lineHeight: "1.4" }],
+        sm: ["0.9375rem", { lineHeight: "1.5" }],
+        base: ["1.0625rem", { lineHeight: "1.6" }],
+        lg: ["1.1875rem", { lineHeight: "1.5" }],
+        xl: ["1.3125rem", { lineHeight: "1.4" }],
+        "2xl": ["1.625rem", { lineHeight: "1.3" }],
+        "3xl": ["2rem", { lineHeight: "1.25" }],
+        "4xl": ["2.5rem", { lineHeight: "1.2" }],
+        "5xl": ["3.25rem", { lineHeight: "1.1" }],
+        "6xl": ["4rem", { lineHeight: "1.05" }],
       },
       colors: {
         border: "hsl(var(--border))",

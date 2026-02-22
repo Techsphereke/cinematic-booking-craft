@@ -237,7 +237,7 @@ export function generateBookingPDF(booking: Booking): void {
 
   const finances = [
     { label: "Estimated Total", value: `£${booking.estimated_total.toFixed(2)}`, highlight: false },
-    { label: "Deposit Required (30%)", value: `£${booking.deposit_amount.toFixed(2)}`, highlight: true },
+    { label: "Deposit Required (60%)", value: `£${booking.deposit_amount.toFixed(2)}`, highlight: true },
     { label: "Remaining Balance", value: `£${booking.remaining_balance.toFixed(2)}`, highlight: false },
   ];
 
@@ -439,7 +439,7 @@ export function generateAgreementPDF(booking: Booking): void {
 
   const payRows = [
     ["Total Contract Value", `£${booking.estimated_total.toFixed(2)}`],
-    ["Deposit Paid (30%)", `£${booking.deposit_amount.toFixed(2)}`],
+    ["Deposit Paid (60%)", `£${booking.deposit_amount.toFixed(2)}`],
     ["Balance Due", `£${booking.remaining_balance.toFixed(2)}`],
     ["Balance Payment", "Due on or before the event date"],
   ];
@@ -471,7 +471,7 @@ export function generateAgreementPDF(booking: Booking): void {
 
   const terms = [
     { title: "1. Services", body: "JT Studios agrees to provide the agreed-upon photography, videography, event hosting, or planning services on the event date specified in this agreement, to the best of their professional ability." },
-    { title: "2. Deposit & Cancellation", body: "The 30% deposit is non-refundable upon cancellation. If JT Studios is unable to fulfil the booking, a full refund including the deposit will be issued within 14 working days." },
+    { title: "2. Deposit & Cancellation", body: "The 60% deposit is non-refundable upon cancellation. If JT Studios is unable to fulfil the booking, a full refund including the deposit will be issued within 14 working days." },
     { title: "3. Balance Payment", body: "The remaining balance is due on or before the event date. Failure to pay the balance may result in cancellation without refund of the deposit." },
     { title: "4. Deliverables", body: "Edited photographs and/or video content will be delivered within an agreed timeframe (typically 4–8 weeks post-event) via the secure client portal." },
     { title: "5. Rights & Usage", body: "JT Studios retains the right to use images/footage for promotional purposes unless the client requests otherwise in writing. The client receives a personal-use licence for all delivered content." },

@@ -19,7 +19,7 @@ export default function CostCalculator() {
 
   const totalHours = Object.values(hours).reduce((a, b) => a + b, 0);
   const totalCost = services.reduce((acc, s) => acc + s.rate * (hours[s.id] || 0), 0);
-  const deposit = Math.round(totalCost * 0.3);
+  const deposit = Math.round(totalCost * 0.6);
   const hasSelection = totalHours > 0;
 
   const adjust = (id: string, delta: number) => {
@@ -190,7 +190,7 @@ export default function CostCalculator() {
                           <p className="font-display text-3xl text-primary">£{totalCost.toLocaleString()}</p>
                         </div>
                         <div className="flex justify-between items-center">
-                          <p className="font-body text-white/30 text-[10px] tracking-widest uppercase">Deposit (30%)</p>
+                          <p className="font-body text-white/30 text-[10px] tracking-widest uppercase">Deposit (60%)</p>
                           <p className="font-body text-white/70 text-sm">£{deposit.toLocaleString()}</p>
                         </div>
                         <div className="flex justify-between items-center">

@@ -322,7 +322,7 @@ export default function Index() {
               className="grid grid-cols-2 gap-4"
             >
               {[
-                { num: "30%", label: "Deposit Only", desc: "Secure your date with just 30% upfront" },
+                { num: "60%", label: "Deposit Only", desc: "Secure your date with just 60% upfront" },
                 { num: "24hr", label: "Response Time", desc: "We respond to every quote within 24 hours" },
                 { num: "100%", label: "Satisfaction", desc: "Every client gets a dedicated team" },
                 { num: "UK", label: "Nationwide", desc: "We travel anywhere across the UK" },
@@ -408,9 +408,9 @@ export default function Index() {
               {
                 step: "02",
                 label: "Book & Deposit",
-                desc: "Love the quote? Secure your date with just a 30% deposit. We handle everything securely online — no faff, no contracts in the post.",
+                desc: "Love the quote? Secure your date with just a 60% deposit. We handle everything securely online — no faff, no contracts in the post.",
                 Icon: CheckCircle2,
-                accent: "30% Deposit · Instant Confirmation · Secure Payment",
+                accent: "60% Deposit · Instant Confirmation · Secure Payment",
                 color: "bg-primary/5",
               },
               {
